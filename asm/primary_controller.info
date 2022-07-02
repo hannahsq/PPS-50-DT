@@ -1,0 +1,126 @@
+file primary_controller.bin E000
+option 6802
+
+cvec E14F-E1B1
+data E378-E38F
+data EB21-EB40
+data EBDA-EBE1
+data EDF5-EE06
+data EEEC-EF27
+cvec EFB5-EFCA
+data F772-F791
+
+label 0080 IC27
+label 0090 IC20_PDR_A
+label 0091 IC20_CR_A
+label 0092 IC20_PDR_B
+label 0093 IC20_CR_B
+label 00A0 IC18_PDR_A
+label 00A1 IC18_CR_A
+label 00A2 IC18_PDR_B
+label 00A3 IC18_CR_B
+label 00C0 IC29
+label 00D0 IC13_CSR
+label 00D1 IC13_RTDR
+label 00E0 IC19_PDR_A
+label 00E1 IC19_CR_A
+label 00E2 IC19_PDR_B
+label 00E3 IC19_CR_B
+
+label 0037 uart_timout
+label 0039 acia_rx_buf_0
+label 003A acia_rx_buf_1
+label 003B acia_rx_buf_2
+label 003E acia_tx_buf_0
+label 003F acia_tx_buf_1
+label 0040 acia_tx_buf_2
+
+label 0898 unknown_memory_addr
+
+label EA60 hdlr_KB_IRQ
+label E000 hdlr_ACIA_IRQ
+label E049 hdlr_ACIA_RTI
+label E079 acia_recv_3_bytes
+label E099 acia_send_byte
+label E0B1 acia_recv_byte
+label E0CE acia_send_3_bytes
+label E11F acia_rx_jmp_via_table
+
+comment E011 disable ACIA interrupts
+
+comment E017 process received byte, store result in M0x56
+comment E01A load result into ACCB
+comment E01C Z==0 on success
+comment E021 Z==0 on success
+comment E02A clear M0x41 if acia_rx_buf_0 in {0x53,0x54,0x71}
+comment E037 clear M0x4F:M0x52 M0x54:M0x55
+
+comment E04B re-enable ACIA interrupts
+
+comment E053 clear M0x56 and return if Rx-bits 3:2 == 00
+comment E05C else set M0x56 to 0x1 and return if Rx-bits 3:2 == 10
+comment E066 else set M0x56 to 0x3 and return if Rx-bits 3:2 == 11
+comment E070 else set M0x56 to 0x2 and return if Rx-bits 3:2 == 01
+comment E078 else return
+
+comment E079 Store three bytes from ACIA in M0x39:M0x3B, returns Z==0 on success 
+
+comment E099 wait for empty Tx buffer and send byte, returns Z==0 on success
+comment E09C wait for Tx register to be empty or timeout
+comment E0AB store ACCB in IC13_TDR
+comment E0AF return Z==0 on success
+
+comment E0B1 wait for full Rx buffer and receive byte, returns Z==0 on success
+comment E0BF return Z==1 on timeout
+comment E0C4 return Z==1 on ACIA error
+comment E0C9 return Z==0 on success
+
+comment E0CE send M0x3E:M0x40 over ACIA, returns Z==0 on success
+
+comment E0EE copy acia_rx_buf to acia_tx_buf and do stuff based on contents of M0x56
+comment E100 Test and branch if M0x56 is even
+comment E107 Jump to ZE29E then return if acia_rx_buf_0 == 0x53, else jump to ZE11F
+
+comment E122 subtract 0x41 from acia_rx_buf_0 and branch if greater than 0x31
+comment E125 arithmetic shift ACCB left
+comment E12B load address 0xE14F + ACCB into X register and jump to the result
+
+comment E474 Set IC18 PB3:PB0 as outputs
+comment E4C5 Initiate ACIA(UART) Master Reset
+comment E4C5 Set (1<<CR3)|(1<<CR6)|(1<<CR7)
+comment E4C5 7 bits, even parity, 1 stop bit
+comment E4C5 RTS High, TxInt disable, RxInt enable
+comment E4C9 Set ACIA clock divider to 16, enable Rx Interrupt
+comment E4C9 Set ACIA format to 8 data bits, 2 stop bits, no parity bits
+comment E4C9 Set ACIA Request To Send, disable Tx data register empty interrupt
+comment E4D1 Select IC18_DDR_A
+comment E4D7 Select IC18_DDR_B
+comment E4DD Select IC19_DDR_A
+comment E4E3 Select IC19_DDR_B
+comment E4E9 Select IC20_DDR_A
+comment E4EF Select IC20_DDR_B
+comment E4F3 Set IC18 PA3:PA0 as outputs
+comment E4F6 Set IC18 PB7:PB0 as inputs
+comment E4FA Set IC19 PA7:PA0 as outputs
+comment E4FE Set IC19 PB5:PB4 as outputs
+comment E502 Set IC20 PA7:PA0 as outputs
+comment E506 Set IC20 PB7:PB0 as outputs
+comment E50A Set IC18 CA2 High, select PRA
+comment E50E Set IC19 CA2 Low, select PRA, enable CA1_IRQ
+comment E512 Set IC20 CA2 Low, select PRA
+comment E516 Set IC18 CB2 Low, select PRB
+comment E51A Set IC19 CB2 Low, select PRB
+comment E51E Set IC20 CB2 Low, select PRB
+comment E546 Test bit 4 of IC18_PDR_A (SW3.1)
+comment E569 Br if IRQ not from keyboard
+comment E572 Return if IRQ not from keyboard or ACIA
+comment E5E1 Select DDR_A
+comment E5E5 Set PB7:PB0 as inputs
+comment E5E8 Set PA3 as input
+comment E5EC Set PB7 as output
+
+comment F3EA clear mem in {0x1,0x4F:0x52,0x54:0x55}, stores 0x1 in M0x4A
+comment F3EA if M0x51 != 0x03, 0x0 otherwise
+
+comment F797 Select bit 5 of IC18_PDR_A (SW3.2)
+comment F7DB Select bit 5 of IC18_PDR_A (SW3.2)

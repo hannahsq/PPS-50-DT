@@ -1,0 +1,15 @@
+(kicad_sch (version 20211123) (generator eeschema)
+
+  (uuid b0af7df7-ca92-46c7-b56a-a1fd098fd9b4)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (hierarchical_label "MB[1..15]" (shape bidirectional) (at 63.5 91.44 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid 7e408a2f-e2fc-4b23-89be-cd7b83c89eb0)
+  )
+)
