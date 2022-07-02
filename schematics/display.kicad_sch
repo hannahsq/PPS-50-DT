@@ -1,0 +1,15 @@
+(kicad_sch (version 20211123) (generator eeschema)
+
+  (uuid b92035a6-adff-47fc-959c-4512a905805a)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (hierarchical_label "DSP[1..18]" (shape input) (at 58.42 114.3 180)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid 71e7355f-43ee-43d5-ac1f-fde616cbf88d)
+  )
+)

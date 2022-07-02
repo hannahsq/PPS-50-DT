@@ -1,0 +1,266 @@
+file gpib_controller.bin E000
+file gpib_controller.bin F800
+
+unused E7E8-FFF7
+
+patch FFFA E0
+patch FFFB 00
+
+label E371 hdlr_IRQ_UART
+
+option 6802
+
+data E162-E16B
+data E3E7-E3E8
+data E4BB-E4EE
+data E5F3-E5FA
+data E726-E731
+data E7BC-E7BF
+data E7B7-E7BA
+data E7BC-E7BF
+data E7C1-E7C4
+data E7C6-E7C9
+data E7CB-E7CE
+data E7D0-E7D3
+data E7D5-E7D8
+data E7DA-E7DD
+
+data EFB6-EFE7
+
+data F7B6-F7E7
+data FA62-FA6B
+data FBE7-FBE8
+data FBF3-FBF4
+data FCBB-FCEE
+data FE93-FE94
+data FF26-FF31
+data FF7B-FF7D
+data FFBC-FFBF
+data FFB7-FFBA
+data FFBC-CCBF
+data FFC1-FFC4
+data FFC6-FFC9
+data FFCB-FFCE
+data FFD0-FFD3
+data FFD5-FFD8
+data FFDA-FFDD
+
+label 0000 GPIB_Addr
+label 0022 uart_tx_buf_0
+label 0023 uart_tx_buf_1
+label 0024 uart_tx_buf_2
+label 0025 unknown_status_0
+label 0026 possible_gpib_status
+label 003C unknown_status_1
+label 003E unkown_uart_reg_0
+label 003F uart_rx_buf_0
+label 0040 uart_rx_buf_1
+label 0041 uart_rx_buf_2
+label 0042 gpia_csr_copy
+label 0043 uart_msg_1
+label 0044 uart_msg_2
+*label 0045 test_ram_addr_2
+*label 0046 test_ram_addr_3
+*label 0047 nmi_mem_2
+label 004A test_ram_addr_4
+label 004B unknown_status_2
+label 004F test_ram_addr_5
+
+label 8000 IC5_INTR
+label 8001 IC5_CSR
+label 8002 IC5_ADSMR
+label 8003 IC5_ACR
+label 8004 IC5_ADRR
+label 8005 IC5_SPR
+label 8006 IC5_CPTR
+label 8007 IC5_DR
+
+label 00C0 IC11_CSR
+label 00C1 IC11_RTDR
+
+label 0050 STACK_BOTTOM
+label 007F STACK_TOP
+
+label 3F3F STR_1
+label 4552 STR_2
+label 460D STR_3
+label 4646 STR_4
+label 4F46 STR_5
+label 4F4B STR_6
+label 4F4E STR_7
+label 4F50 STR_8
+label 5220 STR_9
+label 5420 STR_A
+label 544F STR_B
+
+label E162 STR_ARR_0
+label E4BB UART_STR_ARR_0
+label E4Eb UART_STR_ARR_0_END
+label E5F3 CONST_2
+label E722 STR_ARR_2
+label E7B6 STR_ARR_3
+label E7B7 STR_10
+label E7BC STR_11
+label E7C1 STR_12
+label E7C6 STR_14
+label E7CB STR_15
+label E7D0 STR_16
+label E7D5 STR_17
+label E7DA STR_18
+
+label E04B main_loop_entry
+
+label E073 some_str_func_B
+label E065 some_str_func_A
+label E0B1 some_str_func_9
+label E0FD get_gpib_newline
+label E112 get_gpib_char_entry_0
+label E113 get_gpib_char_entry_1
+label E115 get_gpib_char_entry_2
+label E11E validate_gpib_char_0
+label E15C invalid_char_0
+label E16C valid_char_0
+label E1A6 hdlr_DCAS
+label E1AF some_str_func_8
+label E251 clr_mem_loop_0
+label E36E fill_mem_w_0x7f
+label E394 test_unknown_status_0
+label E39D some_str_func_6
+label E3B4 some_str_func_5
+label E3BF some_str_func_C
+label E3E0 some_str_func_4
+label E406 some_str_func_3
+label E40D some_str_func_2
+label E419 some_str_func_1
+label E49A cmd_str_func_1
+label E4AC cmd_str_func_1_loop
+label E509 match_loop_1
+*label E551 test_str_func
+label E59A return_1
+label E5FB some_uart_func_0
+label E635 uart_get_str
+label E64E uart_get_str_timeout
+label E650 uart_get_str_end
+label E652 uart_put_char
+label E668 uart_get_char
+label E683 uart_put_str
+label E69C uart_send_str_timeout
+label E69E uart_send_str_end
+label E6A0 important_looking_uart_func_0
+label E6E9 return_3
+label E6FA get_M0x45&0xfth_char_of_STR_ARR_2
+label E708 str_arr_2_loop
+label E721 return_2
+*label E732 test_func_1
+label E73D test_gpib_csr_0
+label E76F test_unk_status_reg_1_0
+label E75E get_next_str_ptr
+label E78C some_uart_func_1
+label E791 return_4
+label E792 some_uart_func_2
+label E798 validate_uart_msg_0
+label E7AC return_5
+label E7AD anda_unk_status_0
+label E7B1 oraa_unk_status_0
+*label E7B1 some_func_2
+
+* Setup Code
+comment E005 Initiate ACIA(UART) Master Reset
+comment E009 Set ACIA clock divider to 16
+comment E009 Set ACIA format to 8 data bits, 2 stop bits, no parity bits
+comment E009 Set ACIA Request To Send, disable Tx data register empty interrupt 
+comment E017 Reset GPIA
+comment E01A Read GPIB Address DIP switch
+comment E01D Discard user-defined bits UD3:UD1
+comment E023 Set GPIB Address and disable talker and listener functionality
+comment E026 Clear Auxiliary Command Register
+comment E029 Clear Interrupt Mask Register
+comment E02E Set MSA bit of Aux Cmd Register
+comment E031 Clear Aux Cmd Reg again
+comment E034 Clear Address Mode Register
+comment E037 Store 0001 in M0x3A:0x3B
+comment E03C Store 0001 in M0x4D:0x4E
+comment E03E Clear M0x4F
+comment E043 Enable talker and Listerner functionality
+comment E049 Store "OK" in 0x47:0x48
+
+*Main loop
+comment E060 Br if GPIB CMD IRQ set
+comment E069 Br if defined GPIB CMD
+comment E074 Br if remote/local state changed
+comment E076 Br if device clear requested
+comment E0ED Br if GPIB byte input interrupt set
+comment E11C Br if GPIB input buffer full
+comment E11E Load loop counter
+comment E125 Br if char in STR_ARR_0
+comment E12D Br if carriage return char
+comment E133 Br if line feed char
+comment E137 Br if full stop char
+comment E13B Br if char is printable
+comment E146 Br if char is a number
+comment E150 Br if char is capital letter
+comment E15A Br if char is lower case letter
+comment E15C Char is not alphanumeric or in '.\\r\\n'
+lcomment E162 "
+comment E191 Br if Device Clear Active State
+comment E204 Br if M0x4A greater than 0x40
+comment E20D Br if M0x4A less than 0x48
+
+comment E24B TODO
+comment E24B seems to copy bytes of memory from *X to M0x2D
+comment E24B preserve clobbered X register in M0x3A:0x3B
+comment E251 clear M0x27 to M0x33
+comment E25C store 0x002D in M0x33:0x34
+comment E25E not sure when this loop terminates 
+comment E25E restore X register from M0x3A:0x3B
+comment E264 Br if \*X greater than 0x39
+comment E267 Increment X and store in M0x3A
+comment E269 Load X register from M0x33
+comment E26B Store ACCA in \*X
+comment E26E Increment X and store in M0x33:M0x34
+
+comment E292 Br if local GBIB status bits zero
+comment E2F5 Br if no GPIB service request pending or status bits non-zero
+comment E301 Br is no GBIB service request
+comment E308 Br if GPIB remote disabled
+comment E30A Clear local and IC5 status bits
+comment E3E4 Br if M0x4A not 0x72
+comment E36E Fills M0x01:M0x20 with 0x7F
+comment E39A Return early if unknown_status_0 == 0x00
+comment E3F5 Br if M0x47:M0x48 == "OK"
+comment E4F3 Br if ACCA = '%20'
+comment E4F7 store command or error in buffer
+comment E50B Br if no match
+comment E515 Br if greater than 1
+comment E559 Br if IC5_INTR bit 2 set i.e. GPIB SPAS or RLC or DCAS or UUCG or UACG occurred
+comment E55F Br if end of string
+comment E56E Set GPIB Force end or identify, data accept disable
+comment E573 Send /cr 
+comment E57A Br if Serial Poll Active State set
+comment E57E Set GPIB Release Data Accept Handshake
+comment E590 Br if M0x4A not 0x72
+
+comment E652 Send char in ACCB to UART via IC11
+comment E655 Poll until UART reports no parity error or timeout (0xFFFF loops)
+comment E65E Timeout occurred
+comment E667 Return with zero flag set if ACCA=0
+comment E652 Get char from UART and store in ACCA
+comment E66B Poll until UART reports no parity error or timeout (0xFFFF loops)
+comment E675 Timeout occurred
+comment E682 Return with zero flag set if ACCA=0
+comment E699 Return with status 0
+comment E69F Return with zero flag set if ACCA=0
+comment E6A3 Br if Receive Data Register full bit set
+comment E6A3 Helps if the Rx clock is connected
+comment E6A5 Clear GPIA Aux Cmd Reg if Receive Data register empty
+comment E6FF Br if M0x45 != M0x46
+comment E703 Br if lower nybble of M0x45 is zero 
+
+comment E70E Return if \*X == 0x00
+comment E714 Return if M0x4B == 0x00
+comment E740 Br if GPIB Serial Poll state inactive
+comment E771 Return if M0x4B not 0x00
+comment E79E Br if char less than '_'
+comment E7A2 Br if char greater than 'p'
+comment E7A4 Char is between '`' and 'o' inclusive
+comment stores 0x4A in M0x26 and M0x47
