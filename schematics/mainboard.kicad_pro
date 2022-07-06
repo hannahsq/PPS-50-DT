@@ -424,12 +424,16 @@
       "Primary Controller"
     ],
     [
-      "bfeef6dd-bdd2-4e03-8f28-145b476a4af3",
-      "Secondary Supply"
+      "fe8575b3-c44a-49a4-8c47-aa7274bbd67b",
+      "PSU Controller Regulation and Reset"
     ],
     [
-      "4da8a5b7-ec02-4efc-901d-2ab9f3b2c1c1",
-      "Regulation and Reset"
+      "2dd791dc-23e1-47d7-b00c-92b73ed0977a",
+      "GPIB Controller Regulation and Reset"
+    ],
+    [
+      "bfeef6dd-bdd2-4e03-8f28-145b476a4af3",
+      "Secondary Supply"
     ],
     [
       "d56a0db8-35a6-4a42-94b5-557f5ced7557",
@@ -468,16 +472,16 @@
       "Frontend"
     ],
     [
+      "c76b9ee4-b87f-4cf7-a2e5-8ffdd4743f4c",
+      "ADC"
+    ],
+    [
       "c75378f4-aba3-4a95-be82-e94437a0f8b2",
       "Latched DAC IC26"
     ],
     [
       "a72f6d0e-d3c6-48b2-aa5f-fcde03b22c16",
       "Latched DAC IC28"
-    ],
-    [
-      "c76b9ee4-b87f-4cf7-a2e5-8ffdd4743f4c",
-      "ADC"
     ],
     [
       "390d7130-26d8-4513-bd17-ae6ae2782c17",
