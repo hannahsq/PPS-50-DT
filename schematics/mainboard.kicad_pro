@@ -448,12 +448,12 @@
       "Keyboard"
     ],
     [
-      "f33d80b0-a403-4edb-8efa-353a5a7e07f3",
-      "GPIB Controller ACIA"
-    ],
-    [
       "ab49574c-7b8c-4acb-bc31-4706d0c2cdec",
       "Display"
+    ],
+    [
+      "f33d80b0-a403-4edb-8efa-353a5a7e07f3",
+      "GPIB Controller ACIA"
     ],
     [
       "1456d356-938b-46d9-a90b-47c0b28a5f25",
@@ -462,6 +462,10 @@
     [
       "ced93656-05ea-48a1-940a-4c64e51a0646",
       "Secondary Processor"
+    ],
+    [
+      "b8f4b40b-6eea-4c05-85fb-c04a946c2235",
+      "ACIA Isolation"
     ],
     [
       "f43448a0-efa4-4812-aa95-c10ec7e1e1ac",
