@@ -1,4 +1,4 @@
-(kicad_sch (version 20211123) (generator eeschema)
+(kicad_sch (version 20230121) (generator eeschema)
 
   (uuid c696762c-08b9-4a87-b3d0-3ff57eb86063)
 
@@ -8,8 +8,36 @@
   )
 
 
-  (hierarchical_label "MB[1..10]" (shape bidirectional) (at 124.46 99.06 0)
-    (effects (font (size 1.27 1.27)) (justify left))
+  (bus_entry (at 124.46 101.6) (size 2.54 2.54)
+    (stroke (width 0) (type default))
+    (uuid afd12973-7573-450a-8454-2e402bef39e1)
+  )
+
+  (bus (pts (xy 124.46 99.06) (xy 124.46 101.6))
+    (stroke (width 0) (type default))
+    (uuid 3dfdad26-42ee-47a7-b411-ea238ce44b60)
+  )
+  (bus (pts (xy 121.92 99.06) (xy 124.46 99.06))
+    (stroke (width 0) (type default))
+    (uuid 4304025d-ea82-429a-a089-364ce0b661cb)
+  )
+  (bus (pts (xy 124.46 101.6) (xy 124.46 109.22))
+    (stroke (width 0) (type default))
+    (uuid 7c6c27c2-ac6d-46b6-b1e1-c84964ec6301)
+  )
+
+  (wire (pts (xy 127 104.14) (xy 129.54 104.14))
+    (stroke (width 0) (type default))
+    (uuid abb069cf-cb09-464e-a503-41fedf112d1c)
+  )
+
+  (label "SS3" (at 129.54 104.14 0) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid c988ba86-2958-475b-9e76-6dfb88204a56)
+  )
+
+  (hierarchical_label "SS[1..10]" (shape bidirectional) (at 121.92 99.06 180) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
     (uuid e99ab664-96ba-4890-b39e-7e58db067e74)
   )
 )

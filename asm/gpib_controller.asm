@@ -641,8 +641,10 @@ test_unknown_status_0 LDAA    unknown_status_0         ;E394: 96 25          '.%
 
 some_str_func_6 LDAA    IC5_ADSMR                ;E39D: B6 80 02       '...'
         ANDA    #$08                     ;E3A0: 84 08          '..'
+; Branch if GPIB is not in talker mode
         BNE     some_str_func_5          ;E3A2: 26 10          '&.'
         LDAA    #$FE                     ;E3A4: 86 FE          '..'
+; Clear bit 0 of unknown_status_0
         JSR     anda_unk_status_0        ;E3A6: BD E7 AD       '...'
         LDX     #M0001                   ;E3A9: CE 00 01       '...'
         STX     M004D                    ;E3AC: DF 4D          '.M'
@@ -650,6 +652,7 @@ some_str_func_6 LDAA    IC5_ADSMR                ;E39D: B6 80 02       '...'
         JMP     return_1                 ;E3B1: 7E E5 9A       '~..'
 
 some_str_func_5 LDAA    #$01                     ;E3B4: 86 01          '..'
+; Set bit 0 of unknown_status_0
         JSR     oraa_unk_status_0        ;E3B6: BD E7 B1       '...'
         LDAA    test_ram_addr_4          ;E3B9: 96 4A          '.J'
         BNE     some_str_func_C          ;E3BB: 26 02          '&.'
@@ -699,13 +702,14 @@ some_str_func_3 CMPA    #$71                     ;E406: 81 71          '.q'
 some_str_func_2 LDAA    M0046                    ;E40D: 96 46          '.F'
         LDAB    M0045                    ;E40F: D6 45          '.E'
         CBA                              ;E411: 11             '.'
-        BEQ     some_str_func_1          ;E412: 27 05          ''.'
+        BEQ     form_gpib_tx_str         ;E412: 27 05          ''.'
         JSR     important_looking_uart_func_0 ;E414: BD E6 A0       '...'
         BRA     some_str_func_2          ;E417: 20 F4          ' .'
 
-some_str_func_1 ANDA    #$05                     ;E419: 84 05          '..'
+form_gpib_tx_str ANDA    #$05                     ;E419: 84 05          '..'
         LDX     #STR_ARR_3               ;E41B: CE E7 B6       '...'
-        JSR     ZE763                    ;E41E: BD E7 63       '..c'
+; Get pointer to Channel A string to copy
+        JSR     find_str(A)              ;E41E: BD E7 63       '..c'
         LDAA    $01,X                    ;E421: A6 01          '..'
         STAA    M0001                    ;E423: 97 01          '..'
         LDAA    $02,X                    ;E425: A6 02          '..'
@@ -718,6 +722,7 @@ some_str_func_1 ANDA    #$05                     ;E419: 84 05          '..'
         STAA    M0005                    ;E433: 97 05          '..'
         LDAA    M0045                    ;E435: 96 45          '.E'
         ANDA    #$0A                     ;E437: 84 0A          '..'
+; Get pointer to Channel B string to copy
         JSR     get_next_str_ptr         ;E439: BD E7 5E       '..^'
         LDAA    $01,X                    ;E43C: A6 01          '..'
         STAA    M0006                    ;E43E: 97 06          '..'
@@ -730,7 +735,9 @@ some_str_func_1 ANDA    #$05                     ;E419: 84 05          '..'
         LDAA    #$2F                     ;E44C: 86 2F          './'
         STAA    M000A                    ;E44E: 97 0A          '..'
         LDAA    M0045                    ;E450: 96 45          '.E'
+; Branch if bit 7 of M0x45 is set
         BMI     ZE464                    ;E452: 2B 10          '+.'
+; Store "TOFF" in M0x0B-M0x0E
         LDX     #STR_B                   ;E454: CE 54 4F       '.TO'
         STX     M000B                    ;E457: DF 0B          '..'
         LDX     #STR_4                   ;E459: CE 46 46       '.FF'
@@ -739,6 +746,7 @@ some_str_func_1 ANDA    #$05                     ;E419: 84 05          '..'
         STAA    M000F                    ;E460: 97 0F          '..'
         BRA     ZE472                    ;E462: 20 0E          ' .'
 
+; Store "T ON" in M0x0B-M0x0E
 ZE464   LDX     #STR_A                   ;E464: CE 54 20       '.T '
         STX     M000B                    ;E467: DF 0B          '..'
         LDX     #STR_7                   ;E469: CE 4F 4E       '.ON'
@@ -747,7 +755,9 @@ ZE464   LDX     #STR_A                   ;E464: CE 54 20       '.T '
         STAA    M000F                    ;E470: 97 0F          '..'
 ZE472   LDAA    M0045                    ;E472: 96 45          '.E'
         ANDA    #$40                     ;E474: 84 40          '.@'
+; Branch if bit 6 of M0x45 is cleared
         BNE     ZE489                    ;E476: 26 11          '&.'
+; Store "OPOFF",0x0D in M0x10-M0x15
         LDX     #STR_8                   ;E478: CE 4F 50       '.OP'
         STX     M0010                    ;E47B: DF 10          '..'
         LDX     #STR_5                   ;E47D: CE 4F 46       '.OF'
@@ -756,6 +766,7 @@ ZE472   LDAA    M0045                    ;E472: 96 45          '.E'
         STX     M0014                    ;E485: DF 14          '..'
         BRA     ZE497                    ;E487: 20 0E          ' .'
 
+; Store "OPON",0x0D in M0x10-M0x14
 ZE489   LDX     #STR_8                   ;E489: CE 4F 50       '.OP'
         STX     M0010                    ;E48C: DF 10          '..'
         LDX     #STR_7                   ;E48E: CE 4F 4E       '.ON'
@@ -788,7 +799,7 @@ UART_STR_ARR_0 FCC     "aVSAbVSBcISAdISBiVOAj"  ;E4BB: 61 56 53 41 62 56 53 42 6
 UART_STR_ARR_0_END FCC     "  ??"                   ;E4EB: 20 20 3F 3F    '  ??'
 ZE4EF   LDAA    $01,X                    ;E4EF: A6 01          '..'
         CMPA    #$20                     ;E4F1: 81 20          '. '
-; Br if ACCA = '%20'
+; Br if ACCA != '%20'
         BNE     ZE4F7                    ;E4F3: 26 02          '&.'
         LDAA    test_ram_addr_4          ;E4F5: 96 4A          '.J'
 ; store command or error in buffer
@@ -844,9 +855,11 @@ ZE54D   LDAA    #$0D                     ;E54D: 86 0D          '..'
         STAA    M000A                    ;E54F: 97 0A          '..'
 ZE551   LDAB    test_ram_addr_5          ;E551: D6 4F          '.O'
         LDX     M004D                    ;E553: DE 4D          '.M'
-ZE555   LDAA    IC5_INTR                 ;E555: B6 80 00       '...'
+send_gpib_string_loop LDAA    IC5_INTR                 ;E555: B6 80 00       '...'
         ROLA                             ;E558: 49             'I'
-; Br if IC5_INTR bit 2 set i.e. GPIB SPAS or RLC or DCAS or UUCG or UACG occurred
+; Br if IC5_INTR bit 2 set i.e. GPIB Serial Poll Active State or Remote/Local State Changed or
+; Device Clear Active State or Undefined Universal Command Recieved or
+; Undefined Address Command Recieved
         BPL     return_1                 ;E559: 2A 3F          '*?'
         LDAA    ,X                       ;E55B: A6 00          '..'
         CMPB    #$0D                     ;E55D: C1 0D          '..'
@@ -857,7 +870,7 @@ ZE555   LDAA    IC5_INTR                 ;E555: B6 80 00       '...'
         STAB    test_ram_addr_5          ;E565: D7 4F          '.O'
         INX                              ;E567: 08             '.'
         STX     M004D                    ;E568: DF 4D          '.M'
-        BRA     ZE555                    ;E56A: 20 E9          ' .'
+        BRA     send_gpib_string_loop    ;E56A: 20 E9          ' .'
 
 ZE56C   LDAB    #$22                     ;E56C: C6 22          '."'
 ; Set GPIB Force end or identify, data accept disable
@@ -867,10 +880,10 @@ ZE56C   LDAB    #$22                     ;E56C: C6 22          '."'
         STAA    IC5_DR                   ;E573: B7 80 07       '...'
         LDAA    IC5_CSR                  ;E576: B6 80 01       '...'
         ROLA                             ;E579: 49             'I'
-; Br if Serial Poll Active State set
+; Br if Remote Enabled
         BPL     return_1                 ;E57A: 2A 1E          '*.'
         LDAA    #$10                     ;E57C: 86 10          '..'
-; Set GPIB Release Data Accept Handshake
+; Reset GPIA
         STAA    IC5_ACR                  ;E57E: B7 80 03       '...'
         LDX     #M0001                   ;E581: CE 00 01       '...'
         STX     M004D                    ;E584: DF 4D          '.M'
@@ -1058,18 +1071,25 @@ important_looking_uart_func_0 LDAA    IC11_CSR                 ;E6A0: 96 C0     
         CLR     IC5_ACR                  ;E6A5: 7F 80 03       '...'
         BRA     return_3                 ;E6A8: 20 3F          ' ?'
 
+; Copy ACIA RTDR byte to acc B
 ZE6AA   LDAA    IC11_RTDR                ;E6AA: 96 C1          '..'
         TAB                              ;E6AC: 16             '.'
         ANDA    #$30                     ;E6AD: 84 30          '.0'
+; Branch if masked rx bits (0x30) not present
         BEQ     return_3                 ;E6AF: 27 38          ''8'
         CMPA    #$20                     ;E6B1: 81 20          '. '
-        BEQ     ZE6EA                    ;E6B3: 27 35          ''5'
+; Branch of 0x20 received on ACIA
+        BEQ     on_acia_rdr_0x20_byte    ;E6B3: 27 35          ''5'
         CMPA    #$30                     ;E6B5: 81 30          '.0'
-        BEQ     ZE6F4                    ;E6B7: 27 3B          '';'
+; Branch of 0x30 received on ACIA
+        BEQ     on_acia_rdr_0x30_byte    ;E6B7: 27 3B          '';'
+; Copy original ACIA RTDR byte to acc A
         TBA                              ;E6B9: 17             '.'
+; Clear masked bits (0x30)
         ANDA    #$CF                     ;E6BA: 84 CF          '..'
         CMPA    #$80                     ;E6BC: 81 80          '..'
-        BNE     ZE6D7                    ;E6BE: 26 17          '&.'
+; Branch if bit 7 not set
+        BNE     on_acia_rdr_non_0x80_byte ;E6BE: 26 17          '&.'
         LDAA    unknown_status_0         ;E6C0: 96 25          '.%'
         CMPA    #$0C                     ;E6C2: 81 0C          '..'
         BEQ     return_3                 ;E6C4: 27 23          ''#'
@@ -1081,24 +1101,25 @@ ZE6AA   LDAA    IC11_RTDR                ;E6AA: 96 C1          '..'
         STAA    IC5_ACR                  ;E6D2: B7 80 03       '...'
         BRA     return_3                 ;E6D5: 20 12          ' .'
 
-ZE6D7   CMPA    #$49                     ;E6D7: 81 49          '.I'
-        BNE     ZE6E1                    ;E6D9: 26 06          '&.'
+on_acia_rdr_non_0x80_byte CMPA    #$49                     ;E6D7: 81 49          '.I'
+        BNE     on_acia_rdr_non_0x49_byte ;E6D9: 26 06          '&.'
         STAA    M0047                    ;E6DB: 97 47          '.G'
         STAA    possible_gpib_status     ;E6DD: 97 26          '.&'
         BRA     return_3                 ;E6DF: 20 08          ' .'
 
-ZE6E1   CMPA    #$4A                     ;E6E1: 81 4A          '.J'
+on_acia_rdr_non_0x49_byte CMPA    #$4A                     ;E6E1: 81 4A          '.J'
+; Return if ACIA rx byte not 0x43
         BNE     return_3                 ;E6E3: 26 04          '&.'
         STAA    M0047                    ;E6E5: 97 47          '.G'
         STAA    possible_gpib_status     ;E6E7: 97 26          '.&'
 return_3 RTS                              ;E6E9: 39             '9'
-ZE6EA   LDAA    M0046                    ;E6EA: 96 46          '.F'
+on_acia_rdr_0x20_byte LDAA    M0046                    ;E6EA: 96 46          '.F'
         STAA    M0045                    ;E6EC: 97 45          '.E'
         ANDB    #$CF                     ;E6EE: C4 CF          '..'
         STAB    M0046                    ;E6F0: D7 46          '.F'
         BRA     return_3                 ;E6F2: 20 F5          ' .'
 
-ZE6F4   ANDB    #$CF                     ;E6F4: C4 CF          '..'
+on_acia_rdr_0x30_byte ANDB    #$CF                     ;E6F4: C4 CF          '..'
         STAB    unknown_status_1         ;E6F6: D7 3C          '.<'
         BRA     return_3                 ;E6F8: 20 EF          ' .'
 
@@ -1169,14 +1190,14 @@ get_next_str_ptr INX                              ;E75E: 08             '.'
         INX                              ;E760: 08             '.'
         INX                              ;E761: 08             '.'
         INX                              ;E762: 08             '.'
-ZE763   CMPA    ,X                       ;E763: A1 00          '..'
+find_str(A) CMPA    ,X                       ;E763: A1 00          '..'
         BEQ     ZE76E                    ;E765: 27 07          ''.'
         INX                              ;E767: 08             '.'
         INX                              ;E768: 08             '.'
         INX                              ;E769: 08             '.'
         INX                              ;E76A: 08             '.'
         INX                              ;E76B: 08             '.'
-        BRA     ZE763                    ;E76C: 20 F5          ' .'
+        BRA     find_str(A)              ;E76C: 20 F5          ' .'
 
 ZE76E   RTS                              ;E76E: 39             '9'
 
@@ -1234,7 +1255,7 @@ ZE7B3   STAA    unknown_status_0         ;E7B3: 97 25          '.%'
 
 STR_ARR_3 FCB     $00                      ;E7B6: 00             '.'
 STR_10  FCC     "A CV"                   ;E7B7: 41 20 43 56    'A CV'
-        NOP                              ;E7BB: 01             '.'
+        FCB     $01                      ;E7BB: 01             '.'
 STR_11  FCC     "A CC"                   ;E7BC: 41 20 43 43    'A CC'
         FCB     $04                      ;E7C0: 04             '.'
 STR_12  FCC     "A IL"                   ;E7C1: 41 20 49 4C    'A IL'
@@ -1244,9 +1265,9 @@ STR_14  FCC     "A VL"                   ;E7C6: 41 20 56 4C    'A VL'
 STR_15  FCC     "B CV"                   ;E7CB: 42 20 43 56    'B CV'
         FCB     $02                      ;E7CF: 02             '.'
 STR_16  FCC     "B CC"                   ;E7D0: 42 20 43 43    'B CC'
-        INX                              ;E7D4: 08             '.'
+        FCB     $08                      ;E7D4: 08             '.'
 STR_17  FCC     "B IL"                   ;E7D5: 42 20 49 4C    'B IL'
-        CLV                              ;E7D9: 0A             '.'
+        FCB     $0A                      ;E7D9: 0A             '.'
 STR_18  FCC     "B VL"                   ;E7DA: 42 20 56 4C    'B VL'
 hdlr_NMI LDAA    #$4A                     ;E7DE: 86 4A          '.J'
         STAA    IC5_SPR                  ;E7E0: B7 80 05       '...'

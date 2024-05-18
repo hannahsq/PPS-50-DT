@@ -16,14 +16,8 @@ data E4BB-E4EE
 data E5F3-E5FA
 data E726-E731
 data E7BC-E7BF
-data E7B7-E7BA
-data E7BC-E7BF
-data E7C1-E7C4
-data E7C6-E7C9
-data E7CB-E7CE
-data E7D0-E7D3
-data E7D5-E7D8
-data E7DA-E7DD
+data E7B6-E7DD
+
 
 data EFB6-EFE7
 
@@ -131,11 +125,12 @@ label E3BF some_str_func_C
 label E3E0 some_str_func_4
 label E406 some_str_func_3
 label E40D some_str_func_2
-label E419 some_str_func_1
+label E419 form_gpib_tx_str
 label E49A cmd_str_func_1
 label E4AC cmd_str_func_1_loop
 label E509 match_loop_1
 *label E551 test_str_func
+label E555 send_gpib_string_loop
 label E59A return_1
 label E5FB some_uart_func_0
 label E635 uart_get_str
@@ -147,7 +142,11 @@ label E683 uart_put_str
 label E69C uart_send_str_timeout
 label E69E uart_send_str_end
 label E6A0 important_looking_uart_func_0
+label E6D7 on_acia_rdr_non_0x80_byte
+label E6E1 on_acia_rdr_non_0x49_byte
 label E6E9 return_3
+label E6EA on_acia_rdr_0x20_byte
+label E6F4 on_acia_rdr_0x30_byte
 label E6FA get_M0x45&0xfth_char_of_STR_ARR_2
 label E708 str_arr_2_loop
 label E721 return_2
@@ -155,6 +154,7 @@ label E721 return_2
 label E73D test_gpib_csr_0
 label E76F test_unk_status_reg_1_0
 label E75E get_next_str_ptr
+label E763 find_str(A)
 label E78C some_uart_func_1
 label E791 return_4
 label E792 some_uart_func_2
@@ -227,17 +227,30 @@ comment E30A Clear local and IC5 status bits
 comment E3E4 Br if M0x4A not 0x72
 comment E36E Fills M0x01:M0x20 with 0x7F
 comment E39A Return early if unknown_status_0 == 0x00
+comment E3A2 Branch if GPIB is not in talker mode
+comment E3A6 Clear bit 0 of unknown_status_0
+comment E3B6 Set bit 0 of unknown_status_0
 comment E3F5 Br if M0x47:M0x48 == "OK"
-comment E4F3 Br if ACCA = '%20'
+comment E41E Get pointer to Channel A string to copy
+comment E439 Get pointer to Channel B string to copy
+comment E452 Branch if bit 7 of M0x45 is set
+comment E454 Store "TOFF" in M0x0B-M0x0E
+comment E464 Store "T ON" in M0x0B-M0x0E
+comment E476 Branch if bit 6 of M0x45 is cleared
+comment E478 Store "OPOFF",0x0D in M0x10-M0x15
+comment E489 Store "OPON",0x0D in M0x10-M0x14
+comment E4F3 Br if ACCA != '%20'
 comment E4F7 store command or error in buffer
 comment E50B Br if no match
 comment E515 Br if greater than 1
-comment E559 Br if IC5_INTR bit 2 set i.e. GPIB SPAS or RLC or DCAS or UUCG or UACG occurred
+comment E559 Br if IC5_INTR bit 2 set i.e. GPIB Serial Poll Active State or Remote/Local State Changed or
+comment E559 Device Clear Active State or Undefined Universal Command Recieved or
+comment E559 Undefined Address Command Recieved
 comment E55F Br if end of string
 comment E56E Set GPIB Force end or identify, data accept disable
 comment E573 Send /cr 
-comment E57A Br if Serial Poll Active State set
-comment E57E Set GPIB Release Data Accept Handshake
+comment E57A Br if Remote Enabled
+comment E57E Reset GPIA
 comment E590 Br if M0x4A not 0x72
 
 comment E652 Send char in ACCB to UART via IC11
@@ -253,12 +266,23 @@ comment E69F Return with zero flag set if ACCA=0
 comment E6A3 Br if Receive Data Register full bit set
 comment E6A3 Helps if the Rx clock is connected
 comment E6A5 Clear GPIA Aux Cmd Reg if Receive Data register empty
+comment E6AA Copy ACIA RTDR byte to acc B
+comment E6AF Branch if masked rx bits (0x30) not present
+comment E6B3 Branch of 0x20 received on ACIA
+comment E6B7 Branch of 0x30 received on ACIA
+comment E6B9 Copy original ACIA RTDR byte to acc A
+comment E6BA Clear masked bits (0x30)
+comment E6BE Branch if bit 7 not set
+comment E6E3 Return if ACIA rx byte not 0x43
 comment E6FF Br if M0x45 != M0x46
 comment E703 Br if lower nybble of M0x45 is zero 
 
 comment E70E Return if \*X == 0x00
 comment E714 Return if M0x4B == 0x00
 comment E740 Br if GPIB Serial Poll state inactive
+
+
+
 comment E771 Return if M0x4B not 0x00
 comment E79E Br if char less than '_'
 comment E7A2 Br if char greater than 'p'
