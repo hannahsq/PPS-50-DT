@@ -13,7 +13,7 @@ def disassemble(info_filename, output_filename):
     print(cmd)
     os.system(cmd)
 
-    with open(temp_filename,"r") as f:
+    with open(temp_filename,"r", encoding="utf8") as f:
         with open(output_filename,"w") as g:
             for line in f:
                 g.write(returns.sub(returns_subs , jumplike.sub(jumplike_subs, line)))
@@ -28,9 +28,9 @@ gpib_controller_output_filename = "gpib_controller.asm"
 dasm = "f9dasm"
 
 if platform == "win32":
-    dasm = "..\\..\\tools\\" + dasm + ".exe"
+    dasm = "..\\" + dasm + ".exe"
 else:
-    dasm = "../../tools/" + dasm
+    dasm = "../" + dasm
 
 disassemble(primary_controller_info_filename, primary_controller_output_filename)
 

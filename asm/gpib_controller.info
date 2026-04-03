@@ -6,18 +6,15 @@ unused E7E8-FFF7
 patch FFFA E0
 patch FFFB 00
 
-label E371 hdlr_IRQ_UART
-
 option 6802
 
+* Data regions
 data E162-E16B
 data E3E7-E3E8
 data E4BB-E4EE
 data E5F3-E5FA
 data E726-E731
-data E7BC-E7BF
 data E7B6-E7DD
-
 
 data EFB6-EFE7
 
@@ -29,9 +26,8 @@ data FCBB-FCEE
 data FE93-FE94
 data FF26-FF31
 data FF7B-FF7D
-data FFBC-FFBF
 data FFB7-FFBA
-data FFBC-CCBF
+data FFBC-FFBF
 data FFC1-FFC4
 data FFC6-FFC9
 data FFCB-FFCE
@@ -39,252 +35,935 @@ data FFD0-FFD3
 data FFD5-FFD8
 data FFDA-FFDD
 
-label 0000 GPIB_Addr
-label 0022 uart_tx_buf_0
-label 0023 uart_tx_buf_1
-label 0024 uart_tx_buf_2
-label 0025 unknown_status_0
-label 0026 possible_gpib_status
-label 003C unknown_status_1
-label 003E unkown_uart_reg_0
-label 003F uart_rx_buf_0
-label 0040 uart_rx_buf_1
-label 0041 uart_rx_buf_2
-label 0042 gpia_csr_copy
-label 0043 uart_msg_1
-label 0044 uart_msg_2
-*label 0045 test_ram_addr_2
-*label 0046 test_ram_addr_3
-*label 0047 nmi_mem_2
-label 004A test_ram_addr_4
-label 004B unknown_status_2
-label 004F test_ram_addr_5
+*=============================================================================
+* RAM Allocation Map
+*=============================================================================
 
-label 8000 IC5_INTR
-label 8001 IC5_CSR
-label 8002 IC5_ADSMR
-label 8003 IC5_ACR
-label 8004 IC5_ADRR
-label 8005 IC5_SPR
-label 8006 IC5_CPTR
-label 8007 IC5_DR
+* GPIB address (from DIP switch, 5 bits)
+label 0000 gpib_addr
 
-label 00C0 IC11_CSR
-label 00C1 IC11_RTDR
+* GPIB transmit buffer: response string built here (M0x01-M0x20)
+* Characters are assembled here before being sent over GPIB when talker-addressed
+
+* UART TX buffer: 3-byte command sent to primary controller
+label 0022 uart_tx_cmd
+label 0023 uart_tx_data_hi
+label 0024 uart_tx_data_lo
+
+* GPIB/UART state flags register
+* Bit 0: talker mode active
+* Bit 1: GPIB addressed-to-talk (ADSMR match)
+* Bit 2: device clear pending
+* Bit 3: primary controller link active (talk/listen enabled)
+* Bit 4: device clear acknowledged
+label 0025 link_state_flags
+
+* GPIB serial poll status byte (written to MC68488 SPR)
+* Values: 'O'=$4F=OK, 'K'=$4B=UART error, 'M'=$4D=syntax error,
+*         'N'=$4E=range error, 'I'=$49=internal error, 'J'=$4A=NMI error
+label 0026 spoll_status
+
+* Numeric conversion workspace (M0x27-M0x34)
+* Used by decimal_to_binary and binary_to_decimal converters
+label 0027 conv_workspace
+label 0033 conv_accum_hi
+label 0034 conv_accum_lo
+label 0035 conv_digit_count
+label 0036 conv_temp_hi
+label 0037 conv_temp_lo
+label 0038 conv_int_digit_count
+
+* GPIB receive state
+label 0039 gpib_rx_char_count
+label 003A gpib_rx_buf_ptr_hi
+*label 003B gpib_rx_buf_ptr_lo
+label 003D gpib_rx_error_flag
+
+* UART retry counter (init to 5, decremented on mismatch)
+label 003E uart_retry_count
+
+* UART RX buffer: 3-byte response from primary controller
+label 003F uart_rx_resp
+label 0040 uart_rx_data_hi
+label 0041 uart_rx_data_lo
+
+* MC68488 CSR snapshot for main loop processing
+label 0042 gpib_csr_snapshot
+
+* DAC value echo from primary controller
+label 0043 dac_value_hi
+label 0044 dac_value_lo
+
+* Device status byte (from primary controller via UART framing)
+* Bit 7: tracking enabled
+* Bit 6: output enabled
+* Bit 3: channel A - current limit active
+* Bit 2: channel A - voltage limit active
+* Bit 1: channel A - constant current mode
+* Bit 0: channel A - constant voltage mode
+* Bits 3:0 also encode channel B status (shifted)
+* Lower nibble indexes into STATUS_STRING_TABLE for mode strings
+label 0045 device_status_confirmed
+label 0046 device_status_pending
+
+* Error/status code for GPIB responses (2-char, e.g. "OK")
+label 0047 error_code_hi
+label 0048 error_code_lo
+
+* GPIB EOI received flag (0x7F = EOI seen)
+label 0049 gpib_eoi_flag
+
+* Current GPIB command character being processed
+label 004A current_gpib_cmd
+
+* SRQ pending flag (0x55 = SRQ needs servicing, 0x00 = idle)
+label 004B srq_pending
+
+* GPIB line terminator flag (0x7F=CR/LF seen, 0xFF=with error)
+label 004C gpib_line_complete
+
+* GPIB TX output pointer (tracks position in response string)
+label 004D gpib_tx_ptr_hi
+*label 004E gpib_tx_ptr_lo
+
+* Last byte sent over GPIB (for EOI detection)
+label 004F gpib_tx_last_byte
 
 label 0050 STACK_BOTTOM
 label 007F STACK_TOP
 
-label 3F3F STR_1
-label 4552 STR_2
-label 460D STR_3
-label 4646 STR_4
-label 4F46 STR_5
-label 4F4B STR_6
-label 4F4E STR_7
-label 4F50 STR_8
-label 5220 STR_9
-label 5420 STR_A
-label 544F STR_B
+*=============================================================================
+* MC68488 GPIA Registers (IC5 at $8000)
+*=============================================================================
+label 8000 MC68488_ISR
+label 8001 MC68488_CSR
+label 8002 MC68488_ADSR
+label 8003 MC68488_ACR
+label 8004 MC68488_ADR
+label 8005 MC68488_SPR
+label 8006 MC68488_CPTR
+label 8007 MC68488_DR
 
-label E162 STR_ARR_0
-label E4BB UART_STR_ARR_0
-label E4Eb UART_STR_ARR_0_END
-label E5F3 CONST_2
-label E722 STR_ARR_2
-label E7B6 STR_ARR_3
-label E7B7 STR_10
-label E7BC STR_11
-label E7C1 STR_12
-label E7C6 STR_14
-label E7CB STR_15
-label E7D0 STR_16
-label E7D5 STR_17
-label E7DA STR_18
+*=============================================================================
+* MC6850 ACIA Registers (IC11 at $00C0)
+*=============================================================================
+label 00C0 ACIA_CSR
+label 00C1 ACIA_DR
 
-label E04B main_loop_entry
+*=============================================================================
+* Inline String Constants (loaded via LDX #imm16 trick)
+*=============================================================================
+label 3F3F STR_UNKNOWN_CMD
+label 4552 STR_ER
+label 460D STR_F_CR
+label 4646 STR_FF
+label 4F46 STR_OF
+label 4F4B STR_OK
+label 4F4E STR_ON
+label 4F50 STR_OP
+label 5220 STR_R_SPACE
+label 5420 STR_T_SPACE
+label 544F STR_TO
 
-label E073 some_str_func_B
-label E065 some_str_func_A
-label E0B1 some_str_func_9
-label E0FD get_gpib_newline
-label E112 get_gpib_char_entry_0
-label E113 get_gpib_char_entry_1
-label E115 get_gpib_char_entry_2
-label E11E validate_gpib_char_0
-label E15C invalid_char_0
-label E16C valid_char_0
-label E1A6 hdlr_DCAS
-label E1AF some_str_func_8
-label E251 clr_mem_loop_0
-label E36E fill_mem_w_0x7f
-label E394 test_unknown_status_0
-label E39D some_str_func_6
-label E3B4 some_str_func_5
-label E3BF some_str_func_C
-label E3E0 some_str_func_4
-label E406 some_str_func_3
-label E40D some_str_func_2
-label E419 form_gpib_tx_str
-label E49A cmd_str_func_1
-label E4AC cmd_str_func_1_loop
-label E509 match_loop_1
-*label E551 test_str_func
-label E555 send_gpib_string_loop
-label E59A return_1
-label E5FB some_uart_func_0
-label E635 uart_get_str
-label E64E uart_get_str_timeout
-label E650 uart_get_str_end
-label E652 uart_put_char
-label E668 uart_get_char
-label E683 uart_put_str
-label E69C uart_send_str_timeout
-label E69E uart_send_str_end
-label E6A0 important_looking_uart_func_0
-label E6D7 on_acia_rdr_non_0x80_byte
-label E6E1 on_acia_rdr_non_0x49_byte
-label E6E9 return_3
-label E6EA on_acia_rdr_0x20_byte
-label E6F4 on_acia_rdr_0x30_byte
-label E6FA get_M0x45&0xfth_char_of_STR_ARR_2
-label E708 str_arr_2_loop
-label E721 return_2
-*label E732 test_func_1
-label E73D test_gpib_csr_0
-label E76F test_unk_status_reg_1_0
-label E75E get_next_str_ptr
-label E763 find_str(A)
-label E78C some_uart_func_1
-label E791 return_4
-label E792 some_uart_func_2
-label E798 validate_uart_msg_0
-label E7AC return_5
-label E7AD anda_unk_status_0
-label E7B1 oraa_unk_status_0
-*label E7B1 some_func_2
+*=============================================================================
+* Data Tables
+*=============================================================================
+label E162 REJECTED_CHARS
+label E4BB CMD_RESPONSE_TABLE
+label E4EB CMD_RESPONSE_TABLE_END
+label E5F3 POWERS_OF_TEN
+label E722 STATUS_ERROR_TABLE
+label E7B6 STATUS_STRING_TABLE
 
-* Setup Code
-comment E005 Initiate ACIA(UART) Master Reset
-comment E009 Set ACIA clock divider to 16
-comment E009 Set ACIA format to 8 data bits, 2 stop bits, no parity bits
-comment E009 Set ACIA Request To Send, disable Tx data register empty interrupt 
-comment E017 Reset GPIA
-comment E01A Read GPIB Address DIP switch
-comment E01D Discard user-defined bits UD3:UD1
-comment E023 Set GPIB Address and disable talker and listener functionality
+* Status string table entries (5 bytes each: key, 4-char string)
+label E7B7 SSTR_A_CV
+label E7BC SSTR_A_CC
+label E7C1 SSTR_A_IL
+label E7C6 SSTR_A_VL
+label E7CB SSTR_B_CV
+label E7D0 SSTR_B_CC
+label E7D5 SSTR_B_IL
+label E7DA SSTR_B_VL
+
+*=============================================================================
+* Function Labels
+*=============================================================================
+
+* Reset and Init
+label E000 hdlr_RST
+
+* Main loop
+label E04B main_loop
+label E065 poll_gpib_commands
+label E073 poll_gpib_status_bits
+label E0B1 gpib_receive_handler
+
+* GPIB receive path
+label E0FD gpib_handle_eoi
+label E112 gpib_store_char_no_inc
+label E113 gpib_store_char
+label E115 gpib_drain_input
+label E11E gpib_validate_char
+label E15C gpib_reject_char
+label E16C gpib_accept_char
+
+* GPIB command processing
+label E1A6 hdlr_device_clear
+label E1AF update_spoll_and_talker
+label E1DB dispatch_gpib_command
+label E200 classify_command_char
+label E24B parse_numeric_argument
+label E251 clear_conv_workspace
+label E311 decimal_to_binary
+label E359 shift_buffer_left
+label E36E clear_gpib_tx_buffer
+label E371 hdlr_IRQ
+label E37C set_syntax_error
+label E388 set_overflow_error
+label E394 check_talker_state
+label E39D enter_talker_mode
+label E3B4 handle_talker_addressed
+label E3BF handle_special_cmd_range
+label E3E0 handle_cmd_read_status
+label E406 handle_cmd_query_or_other
+label E40D handle_cmd_query
+label E419 build_query_response
+label E49A build_setcmd_response
+label E4AC setcmd_lookup_loop
+label E509 calc_channel_offset
+label E551 begin_gpib_transmit
+label E555 gpib_transmit_loop
+label E59A return_ok
+
+* UART inter-processor communication
+label E59B binary_to_decimal
+label E5FB uart_send_command
+label E635 uart_recv_3_bytes
+label E64E uart_recv_timeout
+label E650 uart_recv_done
+label E652 uart_put_byte
+label E668 uart_get_byte
+label E683 uart_send_3_bytes
+label E69C uart_send_timeout
+label E69E uart_send_done
+
+* UART receive polling (called from main loop)
+label E6A0 uart_poll_rx
+label E6D7 uart_rx_handle_error_code
+label E6E1 uart_rx_handle_nmi_error
+label E6E9 uart_rx_return
+label E6EA uart_rx_update_status
+label E6F4 uart_rx_update_link_state
+label E6FA check_status_change
+label E708 status_table_search_loop
+label E721 check_status_return
+
+* UART response validation and status update
+label E732 check_uart_error_response
+label E73D handle_serial_poll
+label E75E find_next_table_entry
+label E763 find_table_entry_by_key
+label E76F sync_link_state
+label E78C notify_primary_stop
+label E791 sync_return
+label E792 send_status_to_primary
+label E798 validate_primary_response
+label E7AC validate_return
+
+* Bit manipulation helpers for link_state_flags
+label E7AD clear_link_state_bits
+label E7B1 set_link_state_bits
+
+* NMI handler
+label E7DE hdlr_NMI
+
+*=============================================================================
+* Reset / Init Comments
+*=============================================================================
+comment E000 Set stack pointer to top of RAM
+comment E005 ACIA Master Reset (write 0x03 to CSR)
+comment E009 Configure ACIA: /16 clock, 8N2, RTS asserted, no interrupts
+comment E00B Disable interrupts during init
+comment E00C Clear all RAM ($0001-$007F)
+comment E015 Reset MC68488 GPIA (set bit 7 of ACR)
+comment E01A Read GPIB address from DIP switch (ADR register)
+comment E01D Mask to 5-bit address (bits 4:0)
+comment E01F Store GPIB address in RAM
+comment E021 OR with $60 to disable talk/listen during setup
+comment E023 Write address to MC68488 ADR (talk+listen disabled)
 comment E026 Clear Auxiliary Command Register
-comment E029 Clear Interrupt Mask Register
-comment E02E Set MSA bit of Aux Cmd Register
-comment E031 Clear Aux Cmd Reg again
-comment E034 Clear Address Mode Register
-comment E037 Store 0001 in M0x3A:0x3B
-comment E03C Store 0001 in M0x4D:0x4E
-comment E03E Clear M0x4F
-comment E043 Enable talker and Listerner functionality
-comment E049 Store "OK" in 0x47:0x48
+comment E029 Clear Interrupt Status Register
+comment E02C Set MSA (Mode Select Auxiliary) bit
+comment E031 Clear ACR again (complete mode select sequence)
+comment E034 Clear Address Status/Mode Register
+comment E037 Init GPIB RX buffer pointer to start (M0x01)
+comment E03C Init GPIB TX output pointer to start (M0x01)
+comment E03E Clear last-byte-sent register
+comment E041 Re-read stored address
+comment E043 Write address with talk+listen enabled
+comment E046 Load "OK" via immediate
+comment E049 Init error status to "OK"
 
-*Main loop
-comment E060 Br if GPIB CMD IRQ set
-comment E069 Br if defined GPIB CMD
-comment E074 Br if remote/local state changed
-comment E076 Br if device clear requested
-comment E0ED Br if GPIB byte input interrupt set
-comment E11C Br if GPIB input buffer full
-comment E11E Load loop counter
-comment E125 Br if char in STR_ARR_0
-comment E12D Br if carriage return char
-comment E133 Br if line feed char
-comment E137 Br if full stop char
-comment E13B Br if char is printable
-comment E146 Br if char is a number
-comment E150 Br if char is capital letter
-comment E15A Br if char is lower case letter
-comment E15C Char is not alphanumeric or in '.\\r\\n'
-lcomment E162 "
-comment E191 Br if Device Clear Active State
-comment E204 Br if M0x4A greater than 0x40
-comment E20D Br if M0x4A less than 0x48
+*=============================================================================
+* Main Loop Comments
+*=============================================================================
+comment E04B === MAIN LOOP START ===
+comment E04B Check for status changes from primary controller
+comment E04E Poll UART for incoming data from primary controller
+comment E051 Check if link state needs synchronisation
+comment E054 Clear CSR snapshot
+comment E057 Read MC68488 Interrupt Status Register
+comment E05A Read MC68488 Command Status Register
+comment E05D Store CSR in snapshot variable
+comment E05F Transfer ISR to condition codes via TAP:
+comment E05F  N=ISR.7 (SPC/RLC/DCAS), Z=ISR==0, V=ISR.6 (CO/ERR)
+comment E05F  C=ISR.0 (BI - Byte In)
+comment E060 Branch if no GPIB interrupts pending (Z=1)
+comment E062 GPIB interrupt active: enter receive handler
+comment E065 Secondary check: test CSR bits directly
+comment E067 Test CSR bits 7 (SPC) and 0 (LPAS/TPAS)
+comment E069 Branch if no command status bits set
+comment E06B Acknowledge command: write 0x10 to ACR (valid cmd)
+comment E073 Transfer CSR to condition codes via TAP
+comment E074 Branch if N=1 (CSR.7: Remote/Local change)
+comment E076 Branch if V=1 (CSR.6: Device Clear Active State)
+comment E078 Mask off device-clear-pending flag
+comment E07D Re-read CSR for additional checks
+comment E081 Loop back if no further status
+comment E086 Handle Remote/Local state change
+comment E088 Process serial poll state from CSR
+comment E08B Check if output pending
+comment E092 Clear DCAS bit from CSR snapshot
+comment E098 Return to main loop polling
 
-comment E24B TODO
-comment E24B seems to copy bytes of memory from *X to M0x2D
-comment E24B preserve clobbered X register in M0x3A:0x3B
-comment E251 clear M0x27 to M0x33
-comment E25C store 0x002D in M0x33:0x34
-comment E25E not sure when this loop terminates 
-comment E25E restore X register from M0x3A:0x3B
-comment E264 Br if \*X greater than 0x39
-comment E267 Increment X and store in M0x3A
-comment E269 Load X register from M0x33
-comment E26B Store ACCA in \*X
-comment E26E Increment X and store in M0x33:M0x34
+*=============================================================================
+* Device Clear Handler
+*=============================================================================
+comment E09A Device clear received on GPIB bus
+comment E09C Acknowledge via ACR
+comment E09F Set device-clear-pending flag in link_state_flags
+comment E0A4 Notify primary controller (send 'V' status)
+comment E0A9 Clear device-clear-pending flag
+comment E0AE Return to main loop
 
-comment E292 Br if local GBIB status bits zero
-comment E2F5 Br if no GPIB service request pending or status bits non-zero
-comment E301 Br is no GBIB service request
-comment E308 Br if GPIB remote disabled
-comment E30A Clear local and IC5 status bits
-comment E3E4 Br if M0x4A not 0x72
-comment E36E Fills M0x01:M0x20 with 0x7F
-comment E39A Return early if unknown_status_0 == 0x00
-comment E3A2 Branch if GPIB is not in talker mode
-comment E3A6 Clear bit 0 of unknown_status_0
-comment E3B6 Set bit 0 of unknown_status_0
-comment E3F5 Br if M0x47:M0x48 == "OK"
-comment E41E Get pointer to Channel A string to copy
-comment E439 Get pointer to Channel B string to copy
-comment E452 Branch if bit 7 of M0x45 is set
-comment E454 Store "TOFF" in M0x0B-M0x0E
-comment E464 Store "T ON" in M0x0B-M0x0E
-comment E476 Branch if bit 6 of M0x45 is cleared
-comment E478 Store "OPOFF",0x0D in M0x10-M0x15
-comment E489 Store "OPON",0x0D in M0x10-M0x14
-comment E4F3 Br if ACCA != '%20'
-comment E4F7 store command or error in buffer
-comment E50B Br if no match
-comment E515 Br if greater than 1
-comment E559 Br if IC5_INTR bit 2 set i.e. GPIB Serial Poll Active State or Remote/Local State Changed or
-comment E559 Device Clear Active State or Undefined Universal Command Recieved or
-comment E559 Undefined Address Command Recieved
-comment E55F Br if end of string
-comment E56E Set GPIB Force end or identify, data accept disable
-comment E573 Send /cr 
-comment E57A Br if Remote Enabled
-comment E57E Reset GPIA
-comment E590 Br if M0x4A not 0x72
+*=============================================================================
+* GPIB Receive Handler
+*=============================================================================
+comment E0B1 === GPIB DATA RECEIVE HANDLER ===
+comment E0B1 Clear char count, error flag, reset buffer pointer
+comment E0BB Poll loop: service housekeeping while waiting for data
+comment E0CD Read MC68488 ADSR to check talk/listen addressing
+comment E0D0 Compare against 0x84 (addressed to listen)
+comment E0D2 Branch if addressed to listen (continue receiving)
+comment E0D4 Not addressed: clear addressed flag
+comment E0D9 Check talker state
+comment E0DC Jump to post-receive processing
+comment E0DF NOPs (alignment padding)
+comment E0E2 Set addressed-to-talk flag in link_state_flags
+comment E0E7 Load buffer write pointer
+comment E0E9 Read ISR
+comment E0EC Transfer to condition codes (C=Byte-In, V=End)
+comment E0ED Branch if no byte waiting (C=0)
+comment E0EF Re-read ISR for EOI check
+comment E0F2 Transfer to condition codes
+comment E0F3 Branch if V=1 (EOI asserted: end of message)
+comment E0F5 Normal byte: read from data register
+comment E0F8 Handle CR/LF line ending within message
+comment E0FB Jump to character validation
 
-comment E652 Send char in ACCB to UART via IC11
-comment E655 Poll until UART reports no parity error or timeout (0xFFFF loops)
-comment E65E Timeout occurred
-comment E667 Return with zero flag set if ACCA=0
-comment E652 Get char from UART and store in ACCA
-comment E66B Poll until UART reports no parity error or timeout (0xFFFF loops)
-comment E675 Timeout occurred
-comment E682 Return with zero flag set if ACCA=0
-comment E699 Return with status 0
-comment E69F Return with zero flag set if ACCA=0
-comment E6A3 Br if Receive Data Register full bit set
-comment E6A3 Helps if the Rx clock is connected
-comment E6A5 Clear GPIA Aux Cmd Reg if Receive Data register empty
-comment E6AA Copy ACIA RTDR byte to acc B
-comment E6AF Branch if masked rx bits (0x30) not present
-comment E6B3 Branch of 0x20 received on ACIA
-comment E6B7 Branch of 0x30 received on ACIA
-comment E6B9 Copy original ACIA RTDR byte to acc A
-comment E6BA Clear masked bits (0x30)
-comment E6BE Branch if bit 7 not set
-comment E6E3 Return if ACIA rx byte not 0x43
-comment E6FF Br if M0x45 != M0x46
-comment E703 Br if lower nybble of M0x45 is zero 
+*=============================================================================
+* EOI and Character Processing
+*=============================================================================
+comment E0FD EOI received: mark end of GPIB message
+comment E0FF Store 0x7F sentinel after current position
+comment E101 Set EOI flag
+comment E103 Set line-complete flag
+comment E105 Read final data byte
+comment E108 Check if it's CR
+comment E10A Branch if CR (store as-is)
+comment E10C Check if LF
+comment E10E Branch if LF
+comment E112 Store char directly (no buffer advance)
+comment E113 Store char at current buffer position
+comment E115 Drain remaining GPIB input bytes after EOI
 
-comment E70E Return if \*X == 0x00
-comment E714 Return if M0x4B == 0x00
-comment E740 Br if GPIB Serial Poll state inactive
+comment E11E === CHARACTER VALIDATION ===
+comment E11E Set rejection table size (10 entries)
+comment E120 Point to rejected characters table
+comment E123 Compare received byte against rejection entry
+comment E125 If match, discard char and continue receiving
+comment E127 Advance to next rejection table entry
+comment E12B Reload buffer pointer
+comment E12D Check for CR terminator (0x0D)
+comment E131 Check for LF terminator (0x0A)
+comment E135 Check for '.' (decimal point, accepted)
+comment E139 Check for control chars (< 0x20)
+comment E13D Control char: discard and continue
+comment E140 Check for digits: 0x30-0x39 ('0'-'9')
+comment E148 Check for uppercase: 0x41-0x5A ('A'-'Z')
+comment E152 Check for lowercase: 0x61-0x7B ('a'-'z')
+comment E15C Character rejected: set error flag to 0xFF
+lcomment E162 Rejected chars: space ' + , - / : ; ` \
 
+comment E16C === ACCEPTED CHARACTER / LINE COMPLETE ===
+comment E16C Check if EOI was received
+comment E170 Clear EOI flag
+comment E173 EOI with valid data: dispatch command
+comment E176 Return to main loop
+comment E179 Increment character count
+comment E17E Check against max command length (50 chars)
+comment E182 Overflow: set error status
+comment E185 Store character in buffer
+comment E187 Advance buffer pointer
+comment E18A Continue receiving
 
+*=============================================================================
+* Post-Receive Processing
+*=============================================================================
+comment E18D Check CSR for DCAS (Device Clear Active State)
+comment E191 Branch if not DCAS (handle normally)
+comment E193 Load link state flags
+comment E196 Branch if no active flags
+comment E198 Set device-clear-pending bit
+comment E19D Notify primary controller ('U' = status update)
+comment E1A2 Update serial poll status and check talker
 
-comment E771 Return if M0x4B not 0x00
-comment E79E Br if char less than '_'
-comment E7A2 Br if char greater than 'p'
-comment E7A4 Char is between '`' and 'o' inclusive
-comment stores 0x4A in M0x26 and M0x47
+comment E1A6 === DEVICE CLEAR HANDLER ===
+comment E1A6 Clear device-clear-pending bit in link_state_flags
+comment E1AB Update serial poll status
+
+comment E1AF === UPDATE SPOLL AND CHECK TALKER ===
+comment E1AF Load serial poll status byte
+comment E1B1 Branch if zero (no status to report)
+comment E1B3 Update MC68488 SPR and handle SRQ
+
+*=============================================================================
+* GPIB Command Dispatch
+*=============================================================================
+comment E1DB === COMMAND DISPATCH (called after complete line received) ===
+comment E1DB Check if primary link is active (bit 3)
+comment E1DF Branch if link not active (ignore command)
+comment E1E1 Clear line-complete flag
+comment E1E4 Reset buffer pointer to start
+comment E1E9 Skip leading null bytes in buffer
+comment E1F4 Check for non-printable chars (< 0x30)
+comment E1F8 Check for end sentinel (0x7F)
+comment E1FC End of buffer: clear and return
+
+comment E200 === CLASSIFY FIRST CHARACTER OF COMMAND ===
+comment E200 Store command character in current_gpib_cmd
+comment E202 Compare against '@' (0x40)
+comment E204 Branch if > '@' (alphabetic command)
+comment E206 Non-alpha first char: syntax error
+comment E20B Compare against 'H' (0x48)
+comment E20D Branch if <= 'H': set command (A-H) with numeric arg
+comment E20F Store command for UART transmission
+comment E211 Check for 'q' (0x71): query command
+comment E213 Return without sending (query handled separately)
+comment E215 Check for 'r' (0x72): read status command
+comment E217 Return without sending (status handled separately)
+comment E219 Other cmd > 'H': advance past command char
+comment E21C Continue to UART send
+
+comment E21E === SET COMMAND (A-H): parse numeric argument ===
+comment E21E Store command letter in UART TX buffer byte 0
+comment E220 Advance past command letter
+comment E221 Parse decimal digits into binary value
+comment E224 Check for parse error
+comment E226 Branch if OK
+comment E228 Parse error: set syntax error
+comment E22D Send command to primary via UART
+comment E230 Check UART response for errors
+comment E233 Validate and store DAC values from response
+
+comment E23A Skip non-command characters in buffer
+comment E23D Check if buffer pointer reached UART TX area (overflow)
+comment E242 Buffer overrun: syntax error
+comment E247 Store updated pointer, continue parsing buffer
+
+*=============================================================================
+* Decimal-to-Binary Converter
+*=============================================================================
+comment E24B === PARSE NUMERIC ARGUMENT ===
+comment E24B Save buffer pointer (X clobbered by conversion)
+comment E24D Point to conversion workspace
+comment E250 Clear workspace
+comment E251 Clear M0x27 through M0x33
+comment E259 Init accumulator pointer to M0x2D
+comment E25E === DIGIT EXTRACTION LOOP ===
+comment E25E Restore buffer pointer
+comment E260 Load current character
+comment E262 Check if > '9' (end of numeric string)
+comment E264 Branch if non-digit: done extracting
+comment E266 Advance buffer pointer
+comment E269 Load accumulator write pointer
+comment E26B Store digit in accumulator
+comment E26D Advance accumulator pointer
+comment E270 Continue with next character
+comment E272 Count integer digits (before decimal point)
+comment E278 Scan extracted digits
+comment E27C Check for '.' (decimal point)
+comment E280 Count digits before decimal
+comment E28E Calculate expected digit count from command type
+comment E28E Subtract command char from 'H' to determine format
+comment E292 Branch if result negative (cmd > 'H')
+comment E294 Commands A-D: voltage/current with 3-digit integer
+comment E29A Commands E-H: limits with 5-digit format
+
+*=============================================================================
+* Binary-to-Decimal Converter
+*=============================================================================
+comment E311 === BINARY TO DECIMAL (16-bit to 5 ASCII digits) ===
+comment E311 Max 4 powers of ten (10000, 1000, 100, 10)
+comment E315 Clear result accumulator
+comment E31C Multiply step: shift and add
+comment E326 Shift accumulator left
+comment E33F Add digit value to accumulator
+comment E352 Advance to next digit, decrement counter
+
+comment E359 === SHIFT BUFFER LEFT (removes leading chars) ===
+comment E359 Count = 12 bytes to shift
+comment E360 Copy byte from offset+1 to offset
+comment E365 Decrement shift counter
+comment E36A Decrement outer loop counter (ACCB)
+
+*=============================================================================
+* Buffer Management
+*=============================================================================
+comment E36E === CLEAR GPIB TX BUFFER ===
+comment E36E Fill M0x01-M0x20 with 0x7F (empty sentinel)
+comment E371 Also serves as IRQ handler entry (NOP + fill)
+
+comment E37C === SET SYNTAX ERROR ===
+comment E37C Store 'M' (0x4D) as serial poll status
+comment E380 Store in error code
+comment E382 Clear transmit buffer
+comment E384 Clear EOI flag
+
+comment E388 === SET OVERFLOW ERROR ===
+comment E388 Store 'O' (0x4F) as serial poll status
+comment E38C Store in error code
+comment E38E Clear EOI flag
+comment E391 Jump to spoll/talker update
+
+*=============================================================================
+* Talker Mode / GPIB Response Transmission
+*=============================================================================
+comment E394 === CHECK TALKER STATE ===
+comment E394 Test bit 3 of link_state_flags (link active)
+comment E398 Branch if link active (proceed to talker check)
+comment E39A Link not active: return immediately
+
+comment E39D === ENTER TALKER MODE ===
+comment E39D Read MC68488 ADSR
+comment E3A0 Test bit 3 (TPAS: Talker Primary Address State)
+comment E3A2 Branch if addressed as talker
+comment E3A4 Not talker: clear talker-active bit
+comment E3A9 Reset TX pointer to buffer start
+comment E3B1 Return
+
+comment E3B4 === HANDLE TALKER ADDRESSED ===
+comment E3B4 Set talker-active bit in link_state_flags
+comment E3B9 Load current command character
+comment E3BB Branch if command is set (not zero)
+comment E3BF Check if command is in special range (0x61-0x72)
+comment E3C1 Branch if <= 0x60
+comment E3C3 Check against 'r' (0x72)
+comment E3C5 Branch if <= 'r': handle query/status response
+
+comment E3C7 === RESPOND WITH UNKNOWN COMMAND ERROR ===
+comment E3C7 Check for null command
+comment E3CE Store command char in TX buffer position 1
+comment E3D0 Store space (0x20) at position 2
+comment E3D4 Store "??" at positions 3-4
+comment E3D9 Store CR (0x0D) at position 5
+comment E3DD Jump to transmit
+
+*=============================================================================
+* Read Status ('r') Command Handler
+*=============================================================================
+comment E3E0 === HANDLE 'r' COMMAND (read error status) ===
+comment E3E2 Compare against 'r'
+comment E3E4 Branch if not 'r': handle set-command response
+comment E3E6 Build response: "ER R" + status
+comment E3E6 Store "ER" in positions 1-2
+comment E3EB Store "R " (R space) in positions 3-4
+comment E3F0 Load current error code (M0x47:M0x48)
+comment E3F2 Compare against "OK"
+comment E3F5 Branch if status is OK
+comment E3F7 Error state: append '!' after error char
+comment E3FD Store error code at positions 5-6
+comment E3FF Store CR terminator at position 7
+comment E403 Jump to transmit
+
+*=============================================================================
+* Query ('q') Command Handler
+*=============================================================================
+comment E406 === HANDLE 'q' COMMAND (query full status) ===
+comment E406 Compare against 'q'
+comment E408 Branch if 'q'
+comment E40A Not 'q': handle as set-command response
+
+comment E40D === WAIT FOR STATUS SYNC before responding ===
+comment E40D Compare confirmed vs pending status
+comment E411 Compare: are they equal?
+comment E412 Branch if synced: build response
+comment E414 Not synced: poll UART and retry
+
+comment E419 === BUILD QUERY RESPONSE STRING ===
+comment E419 Mask channel A status bits (low 3 bits)
+comment E41B Point to STATUS_STRING_TABLE
+comment E41E Find Channel A mode string (CV/CC/IL/VL)
+comment E421 Copy 4-char string to TX buffer positions 1-4
+comment E431 Store '/' separator at position 5
+comment E435 Load status for channel B selection
+comment E437 Mask channel B status bits
+comment E439 Find Channel B mode string
+comment E43C Copy 4-char string to positions 6-9
+comment E44C Store '/' separator at position 10
+comment E450 Test bit 7 of device_status (tracking flag)
+comment E452 Branch if tracking enabled
+comment E454 Tracking off: store "TOFF" at positions 11-14
+comment E45E Store '/' separator at position 15
+comment E462 Branch to output state
+comment E464 Tracking on: store "T ON" at positions 11-14
+comment E46E Store '/' separator at position 15
+comment E472 Test bit 6 of device_status (output flag)
+comment E474 Mask bit 6
+comment E476 Branch if output enabled
+comment E478 Output off: store "OPOFF" + CR at positions 16-21
+comment E487 Branch to transmit
+comment E489 Output on: store "OPON" + CR at positions 16-20
+comment E497 Jump to transmit
+
+*=============================================================================
+* Set Command GPIB Response Builder
+*=============================================================================
+comment E49A === BUILD SET-COMMAND RESPONSE ===
+comment E49A Load DAC value echo from primary (2 bytes)
+comment E49C Mask bit 6 of high byte
+comment E4A4 Convert binary DAC value to decimal ASCII
+comment E4A7 Load command character
+comment E4A9 Point to command-response lookup table
+comment E4AC === LOOKUP LOOP: find 3-letter response code ===
+comment E4AC Compare command char against table entry
+comment E4AE Branch if match found
+comment E4B0 Advance 4 bytes to next table entry
+comment E4B4 Check for end of table
+comment E4B7 Loop if not at end
+comment E4B9 No match: fall through (uses last entry "  ??")
+lcomment E4BB Command lookup table (4 bytes each): cmd_char, response[3]
+lcomment E4BB a=VSA b=VSB c=ISA d=ISB i=VOA j=VOB k=IOA l=IOB e=VLA f=VLB g=ILA h=ILB
+comment E4EF Copy 3-letter response code to TX buffer
+comment E4F1 Check if response byte is space (default entry)
+comment E4F3 If space: use original command char instead
+comment E4F7 Store response string in TX positions 1-3
+comment E501 Store space separator at position 4
+comment E505 Reload command character
+comment E507 Subtract 'a' to get channel/function index
+comment E509 === CALCULATE CHANNEL OFFSET (a-d=0-3, e-h=0-3, i-l=0-3) ===
+comment E509 Compare against 3
+comment E50B Branch if > 3 (commands e-l)
+comment E50D Branch to format with decimal point
+comment E50F Subtract 4 for second group, loop
+comment E513 Compare offset: 0-1=voltage/current, 2-3=limits
+comment E515 Branch if > 1: limit commands (no decimal in value)
+comment E517 Format value with decimal point insertion
+comment E51B Store '.' at appropriate position
+comment E521 Suppress leading zero
+comment E529 Store CR terminator
+comment E52F Limit format: space-pad instead of decimal
+comment E54D Store CR at position 10
+comment E551 === BEGIN GPIB TRANSMIT ===
+comment E551 Load last-byte-sent register
+comment E553 Load TX output pointer
+
+comment E555 === GPIB TRANSMIT LOOP ===
+comment E555 Read MC68488 ISR
+comment E558 Rotate: bit 2 -> N flag (BO: Byte Out ready)
+comment E559 Branch if not ready (also checks for SPC/DCAS/etc)
+comment E55B Load current byte from TX buffer
+comment E55D Check if last byte was CR (end of response)
+comment E55F Branch if end of string
+comment E561 Write byte to MC68488 data register
+comment E564 Save as last-byte-sent
+comment E567 Advance TX pointer
+comment E56A Loop to send next byte
+comment E56C === END OF GPIB RESPONSE ===
+comment E56C Set GPIB EOI + Force End (0x22 to ACR)
+comment E571 Send LF (0x0A) as final byte with EOI
+comment E576 Read CSR
+comment E579 Check if still remote-enabled
+comment E57A Branch if remote (done)
+comment E57C Reset GPIA (returned to local)
+comment E581 Reset TX pointer to buffer start
+comment E586 Clear last-byte-sent
+comment E589 Clear transmit buffer
+comment E58C Check if this was a read-status command
+comment E58E Compare against 'r'
+comment E590 Branch if not 'r'
+comment E592 Reset error status to "OK" after successful read
+comment E597 Clear current command
+
+*=============================================================================
+* Binary-to-Decimal Converter (for GPIB response formatting)
+*=============================================================================
+comment E59B === BINARY TO DECIMAL CONVERSION ===
+comment E59B Clear conversion workspace
+comment E5A8 Set digit count to 4
+comment E5AC Load 16-bit value to convert
+comment E5B0 Save workspace pointer
+comment E5B2 Point to powers-of-ten table
+comment E5B5 === DIVISION LOOP: repeated subtraction ===
+comment E5B5 Subtract current power of ten
+comment E5B9 Branch if result positive (digit found)
+comment E5BB Add back (went too far)
+comment E5BF Advance to next power of ten
+comment E5C1 Increment digit counter for current position
+comment E5C7 Branch if more digits to extract
+comment E5CB Digit found: increment count at workspace position
+comment E5D5 Store remainder
+comment E5D9 Convert BCD digits to ASCII ('0'-'9')
+comment E5E0 OR with 0x30 to make ASCII
+comment E5EA Store decimal digits in TX buffer positions 5-8
+
+lcomment E5F3 Powers of ten: $2710(10000) $03E8(1000) $0064(100) $000A(10)
+
+*=============================================================================
+* UART Inter-Processor Communication
+*=============================================================================
+comment E5FB === SEND COMMAND TO PRIMARY CONTROLLER ===
+comment E5FB Set retry count to 5
+comment E5FF Send link_state_flags as handshake byte
+comment E601 Transmit via UART
+comment E604 === WAIT FOR ACKNOWLEDGMENT ===
+comment E604 Receive byte from primary
+comment E607 Branch if timeout
+comment E609 Transfer to ACCA
+comment E60A Mask framing bits (0x30)
+comment E60C Branch if framing bits present (not yet acknowledged)
+comment E60E Store received status in link state
+comment E610 Send 3-byte command (uart_tx_cmd + data)
+comment E613 Branch if send failed
+comment E615 Receive 3-byte response
+comment E618 Branch if receive failed
+comment E61A Success: process response
+comment E61C === UART COMMS ERROR ===
+comment E61C Set error code to 'K' (comms error)
+comment E620 Set serial poll status to 'K'
+comment E624 === VERIFY RESPONSE ===
+comment E624 Load response byte 0
+comment E626 Mask bit 7 (error flag)
+comment E628 Compare against sent command
+comment E62A Branch if match (command acknowledged)
+comment E62C Mismatch: decrement retry counter
+comment E62F Branch if retries remaining
+
+comment E635 === UART RECEIVE 3 BYTES ===
+comment E635 Receive byte 0 (command echo / status)
+comment E63A Store in uart_rx_resp
+comment E63C Receive byte 1 (data high)
+comment E641 Store in uart_rx_data_hi
+comment E643 Receive byte 2 (data low)
+comment E648 Store in uart_rx_data_lo
+comment E64A Clear error flag (success)
+comment E64E Timeout: set error flag 0xFF
+
+comment E652 === UART PUT BYTE (ACCB -> ACIA) ===
+comment E652 Init timeout counter to 0xFFFF
+comment E655 Poll ACIA status: check TDRE (bit 1)
+comment E659 Branch if transmit register empty
+comment E65B Decrement timeout counter
+comment E65E Timeout: return with error (0xFF)
+comment E663 Write byte to ACIA data register
+comment E665 Clear error flag (success)
+comment E667 Return: Z=1 if success, Z=0 if error
+
+comment E668 === UART GET BYTE (ACIA -> ACCB) ===
+comment E668 Init timeout counter to 0xFFFF
+comment E66B Poll ACIA status: check RDRF (bit 0)
+comment E670 Branch if receive register full
+comment E675 Timeout: return with error
+comment E67A Check for framing/overrun errors (bits 6:4)
+comment E67C Error detected: return with error
+comment E67E Clear error flag (success)
+comment E67F Read byte from ACIA data register
+
+comment E683 === UART SEND 3 BYTES ===
+comment E683 Send uart_tx_cmd
+comment E688 Branch if error
+comment E68A Send uart_tx_data_hi
+comment E68F Branch if error
+comment E691 Send uart_tx_data_lo
+comment E696 Branch if error
+comment E698 Clear error flag (success)
+comment E69C Timeout: set error flag 0xFF
+
+*=============================================================================
+* UART Receive Polling (called from main loop)
+*=============================================================================
+comment E6A0 === POLL UART FOR INCOMING DATA FROM PRIMARY ===
+comment E6A0 Read ACIA status register
+comment E6A2 Transfer to condition codes (C=RDRF)
+comment E6A3 Branch if receive data register full
+comment E6A5 No data: clear MC68488 ACR and return
+comment E6AA Read received byte
+comment E6AC Transfer to ACCB (preserve original)
+comment E6AD Mask framing/type bits (0x30)
+comment E6AF Branch if no framing bits (raw data, ignore)
+comment E6B1 Check for 0x20 (status update frame)
+comment E6B3 Branch to handle status update
+comment E6B5 Check for 0x30 (link state frame)
+comment E6B7 Branch to handle link state update
+comment E6B9 Other frame type: extract payload
+comment E6BA Clear framing bits to get status code
+comment E6BC Check if status code has bit 7 set (0x8x = mode change)
+comment E6BE Branch if not a mode change
+comment E6C0 Mode change: check link state
+comment E6C2 Compare against 0x0C (both directions active)
+comment E6C4 Branch if fully active (ignore duplicate)
+comment E6C6 Notify primary: send 'T' (talker notification)
+comment E6CB Clear link-active bit in link_state_flags
+comment E6D0 Set MSA bit in MC68488 ACR
+comment E6D5 Return
+
+comment E6D7 === HANDLE ERROR STATUS CODE ===
+comment E6D7 Check for 'I' (0x49, internal error)
+comment E6D9 Branch if not 'I'
+comment E6DB Store 'I' as error code and spoll status
+comment E6DF Return
+comment E6E1 Check for 'J' (0x4A, NMI error)
+comment E6E3 Branch if not 'J': ignore other codes
+comment E6E5 Store 'J' as error code and spoll status
+
+comment E6EA === HANDLE STATUS UPDATE (0x20 frame) ===
+comment E6EA Copy pending status to confirmed
+comment E6EE Clear framing bits from received byte
+comment E6F0 Store as new pending device status
+comment E6F2 Return
+
+comment E6F4 === HANDLE LINK STATE UPDATE (0x30 frame) ===
+comment E6F4 Clear framing bits
+comment E6F6 Store as link state status
+comment E6F8 Return
+
+*=============================================================================
+* Status Change Detection
+*=============================================================================
+comment E6FA === CHECK FOR STATUS CHANGE (called from main loop) ===
+comment E6FA Load confirmed device status
+comment E6FC Load pending device status
+comment E6FE Compare: has status changed?
+comment E6FF Branch if different (still waiting for sync)
+comment E701 Mask lower nibble (channel mode bits)
+comment E703 Branch if zero (no active mode to report)
+comment E705 Point to STATUS_ERROR_TABLE
+comment E708 Search for matching status entry
+comment E70C Load table entry
+comment E70E Branch if null (end of table)
+comment E710 Store as error code
+comment E712 Load SRQ pending flag
+comment E714 Branch if SRQ already pending
+comment E716 Store as spoll status
+comment E718 Set SRQ pending flag to 0x55
+comment E71E Clear SRQ pending flag
+
+lcomment E722 Status error table: maps lower nibble of device status
+lcomment E722 to error code characters. Index 0-3=null, 4-15=ACACBBDDEGFH
+
+*=============================================================================
+* UART Response Validation
+*=============================================================================
+comment E732 === CHECK UART ERROR IN RESPONSE ===
+comment E732 Load response byte 0
+comment E734 Test bit 7 (error flag from primary)
+comment E736 Branch if no error
+comment E738 Error: mask to get error code
+comment E73A Store as error code and spoll status
+
+*=============================================================================
+* Serial Poll Handler
+*=============================================================================
+comment E73D === HANDLE SERIAL POLL STATE ===
+comment E73D Store CSR in snapshot
+comment E73F Transfer to condition codes
+comment E740 Branch if bit 7 clear (SPC not active)
+comment E742 Rotate to check next bit
+comment E743 Branch if talk-addressed during poll
+comment E745 Not talk-addressed: clear link-active bit
+comment E74A Notify primary: send 'T' (entering talker mode)
+comment E74F Clear SRQ pending flag
+comment E754 Talk-addressed: set link-active bit
+comment E759 Notify primary: send 'S' (serial poll response)
+
+*=============================================================================
+* Link State Synchronisation
+*=============================================================================
+comment E75E === FIND NEXT TABLE ENTRY (advance 5 bytes) ===
+comment E763 === FIND TABLE ENTRY BY KEY (search for ACCA in 5-byte table) ===
+comment E763 Compare ACCA against first byte of entry
+comment E765 Branch if match
+comment E767 Advance 5 bytes to next entry
+comment E76C Loop (no bounds check - table must contain match)
+
+comment E76F === SYNC LINK STATE WITH PRIMARY ===
+comment E76F Load SRQ pending flag
+comment E771 Return if SRQ pending (don't sync during poll)
+comment E773 Load link_state_flags
+comment E775 Mask bit 3 (link active)
+comment E777 Load link state from UART
+comment E779 Mask bit 0, shift to bit 3 position
+comment E77E Compare local vs remote link state
+comment E77F Branch if already synced
+comment E781 Check if local says active
+comment E783 Branch if local says inactive
+comment E785 Local active, remote inactive: send 'S' to primary
+comment E78C Local inactive, remote active: send 'T' to primary
+
+comment E792 === SEND STATUS BYTE TO PRIMARY ===
+comment E792 Store status char in uart_tx_cmd
+comment E794 Send command via UART
+
+comment E798 === VALIDATE PRIMARY RESPONSE ===
+comment E798 Load response byte 0
+comment E79A Mask bit 7
+comment E79C Compare against '_' (0x5F)
+comment E79E Branch if less (not a valid command echo)
+comment E7A0 Compare against 'p' (0x70)
+comment E7A2 Branch if greater (not valid)
+comment E7A4 Valid echo: store response data as DAC values
+comment E7A8 Store in dac_value_hi and dac_value_lo
+
+*=============================================================================
+* Bit Manipulation Helpers
+*=============================================================================
+comment E7AD === CLEAR BITS IN link_state_flags ===
+comment E7AD AND ACCA with link_state_flags (ACCA = mask)
+comment E7AF Branch to store
+
+comment E7B1 === SET BITS IN link_state_flags ===
+comment E7B1 OR ACCA with link_state_flags (ACCA = bits to set)
+comment E7B3 Store result
+
+*=============================================================================
+* Status String Table
+*=============================================================================
+lcomment E7B6 Status string table (5 bytes each: status_key, 4-char string)
+lcomment E7B7 Key $00: "A CV" - Channel A Constant Voltage
+lcomment E7BC Key $01: "A CC" - Channel A Constant Current
+lcomment E7C1 Key $04: "A IL" - Channel A Current Limit
+lcomment E7C6 Key $05: "A VL" - Channel A Voltage Limit
+lcomment E7CB Key $00: "B CV" - Channel B Constant Voltage
+lcomment E7D0 Key $02: "B CC" - Channel B Constant Current
+lcomment E7D5 Key $08: "B IL" - Channel B Current Limit
+lcomment E7DA Key $0A: "B VL" - Channel B Voltage Limit
+
+*=============================================================================
+* NMI Handler
+*=============================================================================
+comment E7DE === NMI HANDLER (hardware fault) ===
+comment E7DE Set status to 'J' (0x4A, NMI/hardware error)
+comment E7E0 Write to MC68488 Serial Poll Register (assert SRQ)
+comment E7E3 Store as spoll status
+comment E7E5 Store as error code
+comment E7E7 Return from interrupt

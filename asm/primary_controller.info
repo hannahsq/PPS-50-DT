@@ -1,6 +1,7 @@
 file primary_controller.bin E000
 option 6802
 
+* Jump tables and data regions
 cvec E14F-E1B1
 data E378-E38F
 data EB21-EB40
@@ -10,117 +11,818 @@ data EEEC-EF27
 cvec EFB5-EFCA
 data F772-F791
 
-label 0080 IC27
-label 0090 IC20_PDR_A
-label 0091 IC20_CR_A
-label 0092 IC20_PDR_B
-label 0093 IC20_CR_B
-label 00A0 IC18_PDR_A
-label 00A1 IC18_CR_A
-label 00A2 IC18_PDR_B
-label 00A3 IC18_CR_B
-label 00C0 IC29
-label 00D0 IC13_CSR
-label 00D1 IC13_RTDR
-label 00E0 IC19_PDR_A
-label 00E1 IC19_CR_A
-label 00E2 IC19_PDR_B
-label 00E3 IC19_CR_B
+*=============================================================================
+* RAM Allocation Map
+*=============================================================================
 
-label 0037 uart_timout
-label 0039 acia_rx_buf_0
-label 003A acia_rx_buf_1
-label 003B acia_rx_buf_2
-label 003E acia_tx_buf_0
-label 003F acia_tx_buf_1
-label 0040 acia_tx_buf_2
+* System timers and counters
+label 0000 irq_prescaler
+label 0001 debounce_timer
+label 0002 key_repeat_timer
+label 0003 output_update_pending
+label 0004 watchdog_counter
+label 0005 tick_counter
 
-label 0898 unknown_memory_addr
+* DAC setpoint registers (Channel A: M0x06-M0x0D, Channel B: M0x12-M0x19)
+* Each channel has 4 x 16-bit values: VS, IS, VO, IO (or VL, IL for limits)
+* Format: high byte has bit 7 as "dirty" flag, bits 6:0 + low byte = 14-bit value
+label 0006 cha_voltage_set_hi
+label 0007 cha_voltage_set_lo
+label 0008 cha_current_set_hi
+label 0009 cha_current_set_lo
+label 000A cha_voltage_limit_hi
+label 000B cha_voltage_limit_lo
+label 000C cha_current_limit_hi
+label 000D cha_current_limit_lo
+label 000E cha_vs_shadow_hi
+label 000F cha_vs_shadow_lo
+label 0010 cha_is_shadow_hi
+label 0011 cha_is_shadow_lo
 
-label EA60 hdlr_KB_IRQ
+label 0012 chb_voltage_set_hi
+label 0013 chb_voltage_set_lo
+label 0014 chb_current_set_hi
+label 0015 chb_current_set_lo
+label 0016 chb_voltage_limit_hi
+label 0017 chb_voltage_limit_lo
+label 0018 chb_current_limit_hi
+label 0019 chb_current_limit_lo
+label 001A chb_vs_shadow_hi
+label 001B chb_vs_shadow_lo
+label 001C chb_is_shadow_hi
+label 001D chb_is_shadow_lo
+
+* ADC readback / display digit buffer
+label 001E adc_digit_0
+label 001F adc_digit_1
+label 0020 adc_digit_2
+label 0021 adc_digit_3
+label 0022 adc_digit_4
+
+* ADC/display channel and mode select
+label 0023 adc_mux_channel
+
+* DAC output holding registers (interleaved ChA/ChB)
+* Written to IC27 (DAC latch) and IC29 (analog mux select)
+label 0024 dac_out_cha_v
+label 0025 dac_out_cha_i
+label 0026 dac_out_chb_v
+label 0027 dac_out_chb_i
+label 0028 dac_out_cha_vl
+label 0029 dac_out_cha_il
+label 002A dac_out_chb_vl
+label 002B dac_out_chb_il
+
+* DAC/display multiplex state
+label 002C dac_mux_ptr_hi
+*label 002D dac_mux_counter
+label 002E dac_mux_select
+
+* Analog feedback: channel mode comparison registers
+* Used by the control loop to compare set vs actual
+label 002F cha_fb_voltage_hi
+label 0030 cha_fb_voltage_lo
+label 0031 cha_fb_current_hi
+label 0032 cha_fb_current_lo
+label 0033 chb_fb_voltage_hi
+label 0034 chb_fb_voltage_lo
+label 0035 chb_fb_current_hi
+label 0036 chb_fb_current_lo
+
+* UART inter-processor link
+label 0037 uart_timeout_lo
+label 0038 uart_timeout_hi
+label 0039 acia_rx_cmd
+label 003A acia_rx_data_hi
+label 003B acia_rx_data_lo
+label 003C math_temp_hi
+label 003D math_temp_lo
+label 003E acia_tx_cmd
+label 003F acia_tx_data_hi
+label 0040 acia_tx_data_lo
+
+* GPIB command/state management
+label 0041 gpib_link_active
+label 0042 reinit_requested
+label 0043 keycode_or_adcmode
+label 0044 key_state_flags
+
+* ADC scan state
+label 0045 scan_column_index
+label 0046 scan_column_mask
+label 0047 scan_result_offset
+label 0048 scan_hit_count
+label 0049 polarity_sign
+
+* Front panel / command processing state machine
+label 004A cmd_state_step
+label 004B digit_buf_0
+label 004C digit_buf_1
+label 004D digit_buf_2
+label 004E digit_buf_3
+label 004F decimal_point_pos
+label 0050 digit_count
+
+* Channel/mode selection and command state
+label 0051 channel_mode_state
+label 0052 cmd_flags
+label 0053 device_state
+label 0054 status_pending
+label 0055 status_confirmed
+label 0056 uart_frame_type
+
+* DAC mux working copy
+label 0057 dac_mux_shadow
+
+* Display output shadow register
+label 0058 display_port_shadow
+
+* Math/computation workspace
+label 0059 math_work_hi
+label 005A math_work_lo
+label 005B temp_ptr_hi
+label 005C temp_ptr_lo
+label 005D temp_counter
+label 005E indirect_ptr_hi
+label 005F indirect_ptr_lo
+label 0060 dac_scale_result
+label 0061 scale_input_hi
+label 0062 scale_input_lo
+
+* ACIA management
+label 0063 acia_inhibit_timer
+label 0064 status_send_delay
+
+* Misc
+label 0065 status_toggle
+label 0066 dac_update_mask
+label 0067 dac_settle_timer
+label 0068 display_scan_index
+
+*=============================================================================
+* Peripheral Register Map
+*=============================================================================
+
+* IC27: DAC Data Latch (directly addressed)
+label 0080 DAC_LATCH
+
+* IC20: MC6821 PIA - Display/Output control
+label 0090 IC20_PRA
+label 0091 IC20_CRA
+label 0092 IC20_PRB
+label 0093 IC20_CRB
+
+* IC18: MC6821 PIA - Frontend analog mux + ADC interface
+label 00A0 IC18_PRA
+label 00A1 IC18_CRA
+label 00A2 IC18_PRB
+label 00A3 IC18_CRB
+
+* IC29: Analog Mux Select Register
+label 00C0 AMUX_SELECT
+
+* IC13: MC6850 ACIA - Inter-processor UART
+label 00D0 ACIA_CSR
+label 00D1 ACIA_DR
+
+* IC19: MC6821 PIA - Keyboard/Display scan
+label 00E0 IC19_PRA
+label 00E1 IC19_CRA
+label 00E2 IC19_PRB
+label 00E3 IC19_CRB
+
+* Range mode switching thresholds
+label 0898 range_threshold_50V
+label 1130 range_threshold_25V
+
+*=============================================================================
+* Function Labels
+*=============================================================================
+
+* ACIA / UART Inter-processor Communication
 label E000 hdlr_ACIA_IRQ
 label E049 hdlr_ACIA_RTI
+label E053 decode_uart_frame_type
 label E079 acia_recv_3_bytes
 label E099 acia_send_byte
 label E0B1 acia_recv_byte
 label E0CE acia_send_3_bytes
-label E11F acia_rx_jmp_via_table
+label E0EE process_gpib_command
+label E11F gpib_cmd_dispatch
 
-comment E011 disable ACIA interrupts
+* GPIB Command Jump Table (indexed by command char - 'A')
+label E14F CMD_JUMP_TABLE
 
-comment E017 process received byte, store result in M0x56
-comment E01A load result into ACCB
-comment E01C Z==0 on success
-comment E021 Z==0 on success
-comment E02A clear M0x41 if acia_rx_buf_0 in {0x53,0x54,0x71}
-comment E037 clear M0x4F:M0x52 M0x54:M0x55
+* Command Handlers: Set voltage/current (A-H)
+label E1B3 cmd_respond_error_or_echo
+label E1C9 cmd_update_status_echo
+label E1D6 cmd_set_frame_type_3
+label E1DD cmd_enable_output
+label E1E6 cmd_disable_output
+label E1EF cmd_enable_tracking
+label E236 cmd_disable_tracking
+label E23F cmd_set_cha_cv_mode
+label E24C cmd_set_cha_cc_mode
+label E259 cmd_set_cha_il_mode
+label E266 cmd_set_cha_vl_mode
+label E273 cmd_read_state
+label E27E cmd_read_version
+label E28C cmd_set_dac_value
+label E29E cmd_enable_remote
 
-comment E04B re-enable ACIA interrupts
+* Set value handler and DAC conversion
+label E2A7 cmd_process_set_value
+label E397 cmd_read_dac_channel
+label E3AF cmd_store_and_convert
+label E390 cmd_set_reinit_flag
 
-comment E053 clear M0x56 and return if Rx-bits 3:2 == 00
-comment E05C else set M0x56 to 0x1 and return if Rx-bits 3:2 == 10
-comment E066 else set M0x56 to 0x3 and return if Rx-bits 3:2 == 11
-comment E070 else set M0x56 to 0x2 and return if Rx-bits 3:2 == 01
-comment E078 else return
+* Data tables for DAC scaling/clipping
+label E378 DAC_CLIP_TABLE_A
+label E38C DAC_CLIP_TABLE_B
 
-comment E079 Store three bytes from ACIA in M0x39:M0x3B, returns Z==0 on success 
+* Reset and Initialization
+label E463 cold_start_entry
+label E494 warm_restart
+label E4C5 acia_init_with_reset
+label E4C9 acia_init_no_reset
+label E521 post_init_setup
 
-comment E099 wait for empty Tx buffer and send byte, returns Z==0 on success
-comment E09C wait for Tx register to be empty or timeout
-comment E0AB store ACCB in IC13_TDR
-comment E0AF return Z==0 on success
+* IRQ Dispatcher
+label E565 hdlr_IRQ
+label E579 hdlr_RTI
 
-comment E0B1 wait for full Rx buffer and receive byte, returns Z==0 on success
-comment E0BF return Z==1 on timeout
-comment E0C4 return Z==1 on ACIA error
-comment E0C9 return Z==0 on success
+* Main Loop
+label E57A main_loop
+label E594 main_loop_body
 
-comment E0CE send M0x3E:M0x40 over ACIA, returns Z==0 on success
+* PIA Direction Register Setup
+label E5DF setup_ic20_directions
+label E5F1 clear_ram_selective
 
-comment E0EE copy acia_rx_buf to acia_tx_buf and do stuff based on contents of M0x56
-comment E100 Test and branch if M0x56 is even
-comment E107 Jump to ZE29E then return if acia_rx_buf_0 == 0x53, else jump to ZE11F
+* Control Loop: DAC output and feedback processing
+label E63B control_loop_channel_a
+label E6B6 control_loop_channel_b
+label E717 set_dac_dirty_flags
+label E726 scale_and_output_dac
+label E736 load_adc_digits_to_buffer
+label E74F check_dac_limits
+label E77D init_feedback_registers
 
-comment E122 subtract 0x41 from acia_rx_buf_0 and branch if greater than 0x31
-comment E125 arithmetic shift ACCB left
-comment E12B load address 0xE14F + ACCB into X register and jump to the result
+* Main processing: combined DAC/ADC/display handler
+label E7BA process_output_and_status
+label E7C6 update_display_and_leds
 
-comment E474 Set IC18 PB3:PB0 as outputs
-comment E4C5 Initiate ACIA(UART) Master Reset
-comment E4C5 Set (1<<CR3)|(1<<CR6)|(1<<CR7)
-comment E4C5 7 bits, even parity, 1 stop bit
-comment E4C5 RTS High, TxInt disable, RxInt enable
-comment E4C9 Set ACIA clock divider to 16, enable Rx Interrupt
-comment E4C9 Set ACIA format to 8 data bits, 2 stop bits, no parity bits
-comment E4C9 Set ACIA Request To Send, disable Tx data register empty interrupt
-comment E4D1 Select IC18_DDR_A
-comment E4D7 Select IC18_DDR_B
-comment E4DD Select IC19_DDR_A
-comment E4E3 Select IC19_DDR_B
-comment E4E9 Select IC20_DDR_A
-comment E4EF Select IC20_DDR_B
-comment E4F3 Set IC18 PA3:PA0 as outputs
-comment E4F6 Set IC18 PB7:PB0 as inputs
-comment E4FA Set IC19 PA7:PA0 as outputs
-comment E4FE Set IC19 PB5:PB4 as outputs
-comment E502 Set IC20 PA7:PA0 as outputs
-comment E506 Set IC20 PB7:PB0 as outputs
-comment E50A Set IC18 CA2 High, select PRA
-comment E50E Set IC19 CA2 Low, select PRA, enable CA1_IRQ
-comment E512 Set IC20 CA2 Low, select PRA
-comment E516 Set IC18 CB2 Low, select PRB
-comment E51A Set IC19 CB2 Low, select PRB
-comment E51E Set IC20 CB2 Low, select PRB
-comment E546 Test bit 4 of IC18_PDR_A (SW3.1)
-comment E569 Br if IRQ not from keyboard
-comment E572 Return if IRQ not from keyboard or ACIA
-comment E5E1 Select DDR_A
-comment E5E5 Set PB7:PB0 as inputs
-comment E5E8 Set PA3 as input
-comment E5EC Set PB7 as output
+* Display LED segment/status handlers
+label EA46 set_led_bit
+label EA4B clear_led_bit
+label EA50 check_update_pending
 
-comment F3EA clear mem in {0x1,0x4F:0x52,0x54:0x55}, stores 0x1 in M0x4A
-comment F3EA if M0x51 != 0x03, 0x0 otherwise
+* Keyboard IRQ Handler
+label EA60 hdlr_KB_IRQ
+label EA74 irq_tick_handler
 
-comment F797 Select bit 5 of IC18_PDR_A (SW3.2)
-comment F7DB Select bit 5 of IC18_PDR_A (SW3.2)
+* Display driver: 7-seg output via IC20
+label EAA2 display_write_segment
+label EB21 SEGMENT_MAP_TABLE
+
+* Binary-to-BCD / BCD-to-Binary conversion
+label EB41 binary_to_bcd
+label EB4E bcd_mask_digits
+label EB5E multiply_accumulate
+label EB68 multiply_step
+label EBA3 divide_by_powers_of_ten
+label EBDA POWERS_OF_TEN
+
+* DAC update dispatcher: processes all 8 setpoints
+label EBE2 dac_update_all
+label ECC9 dac_scale_for_output
+label EDF5 DAC_SCALE_TABLE_A
+label EDFE DAC_SCALE_TABLE_B
+
+* Voltage/current copy with tracking support
+label EC7D store_cha_voltage_feedback
+label EC9A store_cha_current_feedback
+label ECA3 store_chb_voltage_feedback
+label ECC0 store_chb_current_feedback
+
+* Keyboard scanning and key decode
+label EE07 keyboard_scan_entry
+label EED1 key_lookup
+label EEEC KEY_MAP_TABLE
+
+* ADC reading and display update
+label EF22 adc_read_and_process
+label EF30 process_adc_result
+
+* Front panel command state machine
+label EFB5 FRONT_PANEL_CMD_TABLE
+label EFA2 fp_cmd_abort
+
+* Numeric entry state machine (front panel digit entry)
+label F067 start_numeric_entry
+label F074 update_digit_display
+label F08D init_digit_buffer
+label F099 clear_digit_buffer
+label F16D fp_cmd_handler_voltage_set
+label F1CE fp_cmd_handler_current_set
+label F22F fp_cmd_handler_voltage_limit
+label F290 fp_cmd_handler_current_limit
+label F2F1 fp_cmd_handler_tracking
+label F3B1 fp_cmd_handler_output_enable
+
+* Command state and cleanup
+label F3EA reset_cmd_state
+label F40C adc_calibration_handler
+
+* DAC value limit checking / range select
+label F792 check_dac_range_25v
+label F7DB check_dac_range_50v
+label F772 RANGE_LIMIT_TABLE
+
+* ADC data acquisition from ICL7135
+label F813 adc_acquire_reading
+label F845 adc_scan_columns
+
+* ADC channel select and polarity
+label F980 select_adc_channel
+label F9C2 update_dac_from_adc
+
+* DAC mux sequencing (writes DAC values to IC27/IC29)
+label FB21 dac_mux_output_step
+label FB42 dac_mux_advance
+label FB7B dac_mux_output_alt
+label FBBE dac_mux_advance_alt
+
+* Output relay and protection logic
+label FBF7 output_relay_control
+label FC29 relay_overcurrent_check
+
+* Complement helpers
+label FB03 negate_ab
+label FB0B select_dac_channel_ptr
+
+* NMI / SWI handlers
+label E629 hdlr_NMI
+label E632 hdlr_SWI
+label E466 hdlr_RST
+
+*=============================================================================
+* ACIA IRQ Handler Comments
+*=============================================================================
+comment E000 === ACIA INTERRUPT HANDLER ===
+comment E000 Increment GPIB activity counter (M0x04)
+comment E00B Set ACIA inhibit timer to 0x14
+comment E011 Disable ACIA RX interrupts temporarily
+comment E014 Read received data byte from ACIA
+comment E017 Decode frame type (bits 3:2 determine status/data/cmd)
+comment E01C Send acknowledgment byte back to GPIB controller
+comment E021 Receive 3-byte command from GPIB controller
+comment E026 Load command byte
+comment E028 Check for 'q' (0x71) - query command
+comment E02A Check for status commands: 'S'(0x53), 'T'(0x54), 'q'(0x71)
+comment E02A These commands clear the GPIB link active flag
+comment E037 Reset command state variables
+comment E03A Clear command step counter
+comment E03D Process command and build response
+comment E040 Send 3-byte response back to GPIB controller
+comment E043 Clear channel mode state bits
+comment E049 Re-enable ACIA RX interrupts (write 0x91 to CSR)
+comment E050 Return from interrupt
+
+*=============================================================================
+* Frame Type Decoder
+*=============================================================================
+comment E053 === DECODE UART FRAME TYPE FROM RX BITS 3:2 ===
+comment E053 Bits 3:2 == 00: normal data (frame_type = 0)
+comment E05C Bits 3:2 == 10: status update (frame_type = 1)
+comment E066 Bits 3:2 == 11: status + data (frame_type = 3)
+comment E070 Bits 3:2 == 01: data only (frame_type = 2)
+
+*=============================================================================
+* ACIA Byte-Level I/O
+*=============================================================================
+comment E079 === RECV 3 BYTES FROM ACIA ===
+comment E079 Receive bytes into acia_rx_cmd, acia_rx_data_hi, acia_rx_data_lo
+comment E079 Returns Z=1 on success, Z=0 on timeout/error
+
+comment E099 === SEND BYTE VIA ACIA ===
+comment E099 Wait for TX buffer empty, send byte from ACCB
+comment E09C Poll ACIA status for TDRE (bit 1)
+comment E0AB Write byte to ACIA data register
+comment E0AF Return Z=1 on success
+
+comment E0B1 === RECV BYTE FROM ACIA ===
+comment E0B1 Wait for RX buffer full, receive byte into ACCB
+comment E0BF Return Z=0 on timeout
+comment E0C4 Return Z=0 on ACIA error
+comment E0C9 Return Z=1 on success
+
+comment E0CE === SEND 3 BYTES VIA ACIA ===
+comment E0CE Send acia_tx_cmd, acia_tx_data_hi, acia_tx_data_lo
+
+*=============================================================================
+* GPIB Command Processing
+*=============================================================================
+comment E0EE === PROCESS GPIB COMMAND ===
+comment E0EE Copy RX buffer to TX buffer (echo command)
+comment E100 Test frame_type: if even, check for special commands
+comment E107 Check for 'S' (0x53): serial poll → enable remote
+comment E10E Check for 'U' (0x55): status update
+comment E112 Check for 'V' (0x56): device clear
+
+comment E11F === COMMAND DISPATCH VIA JUMP TABLE ===
+comment E122 Subtract 'A' (0x41) from command byte to get table index
+comment E125 Double index for 16-bit pointers (ASLB)
+comment E126 Check bounds: index must be <= 0x31 (commands 'A'-'r')
+comment E12B Load jump address from table at E14F + index
+comment E143 Jump to command handler
+
+*=============================================================================
+* Command Handlers
+*=============================================================================
+comment E14F === COMMAND JUMP TABLE ===
+comment E14F Entries 0-7 ('A'-'H'): cmd_process_set_value (voltage/current set)
+comment E15F Entry 8 ('I'): cmd_set_cha_cv_mode
+comment E161 Entry 9 ('J'): cmd_set_cha_cc_mode
+comment E163 Entry 10 ('K'): cmd_set_cha_il_mode
+comment E165 Entry 11 ('L'): cmd_set_cha_vl_mode
+comment E167 Entry 12 ('M'): cmd_set_dac_value (readback ChA)
+comment E169 Entry 13 ('N'): cmd_set_dac_value (readback ChA alt)
+comment E16B Entry 14 ('O'): cmd_set_dac_value (readback ChB)
+comment E16D Entry 15 ('P'): cmd_set_dac_value (readback ChB alt)
+comment E16F Entry 16 ('Q'): cmd_enable_tracking
+comment E171 Entry 17 ('R'): cmd_disable_tracking
+comment E173 Entry 18 ('S'): cmd_enable_remote
+comment E175 Entry 19 ('T'): cmd_update_status_echo
+comment E177 Entry 20 ('U'): cmd_set_frame_type_3
+comment E179 Entry 21 ('V'): cmd_set_reinit_flag
+comment E17B Entry 22-23 ('W','X'): cmd_respond_error
+comment E17F Entry 24 ('Y'): cmd_enable_output
+comment E181 Entry 25 ('Z'): cmd_disable_output
+comment E1AF Entry 48 ('q'): cmd_read_state
+comment E1B1 Entry 49 ('r'): cmd_read_version
+
+comment E1B3 === ERROR/ECHO RESPONSE ===
+comment E1B3 Set bit 7 of response byte (error flag)
+comment E1BA Store in TX buffer for GPIB response
+comment E1BC Set error status in M0x52
+comment E1C0 Clear UART timeout counters
+
+comment E1EF === ENABLE TRACKING ===
+comment E1EF Set bit 7 of device_state (tracking enabled)
+comment E1F5 Copy Channel A setpoints to Channel B
+
+comment E236 === DISABLE TRACKING ===
+comment E236 Clear bit 7 of device_state
+
+comment E273 === READ STATE COMMAND ===
+comment E273 Copy device_state and status_pending to TX buffer
+
+comment E27E === READ VERSION ===
+comment E27E Return version string (0x31, 0x31)
+
+*=============================================================================
+* Set Value Processing
+*=============================================================================
+comment E2A7 === PROCESS SET VALUE (commands A-H) ===
+comment E2A7 Subtract 'A' from command byte to get channel/function index
+comment E2AB Mask to 3-bit index
+comment E2AD Check bit 2: if set, it's a limit command (E-H)
+comment E2B8 Check tracking state
+comment E2C8 Shift data value (left shift acia_rx_data by 1)
+comment E2CE Check range limits via F7DB
+comment E2D8 Store set value in appropriate DAC register
+comment E2E6 Apply mode/state mask
+comment E2F5 Look up DAC scaling from table at E378
+comment E333 Handle commands D-H (current limits)
+comment E360 Call dac_update_all to apply changes
+
+comment E397 === READ DAC CHANNEL ===
+comment E397 Calculate register offset from channel index
+comment E3A2 Load 16-bit DAC value
+comment E3A6 Right-shift (remove dirty bit)
+comment E3AA Store in TX buffer for response
+
+comment E3AF === STORE AND CONVERT DAC VALUE ===
+comment E3AF Store received 16-bit value in DAC register
+comment E3C8 Compare command against 'A'-'D' for channel routing
+comment E3DC Handle 'A': clear ChA voltage shadow
+comment E3F0 Handle 'B': clear ChA current shadow
+comment E405 Handle 'C': clear ChB voltage shadow
+comment E41A Handle 'D': clear ChB current shadow
+
+*=============================================================================
+* Initialization
+*=============================================================================
+comment E463 === COLD START (RESET handler) ===
+comment E463 Disable interrupts, set stack pointer
+comment E466 Disable IC19 CB2 interrupt
+comment E46A Setup IC20 direction registers
+comment E46D Initialize ACIA with full reset
+comment E470 Read IC18 Port A (switch state)
+comment E474 Set IC18 PA3:PA0 as outputs (DAC mux select)
+comment E476 Initialize DAC output system
+comment E479 Clear device_state, keycode, key_state_flags, frame_type
+comment E487 Startup delay loop (~65536 iterations)
+comment E48D Set GPIB link active flag to 0xFF
+comment E491 Jump to post_init_setup
+
+comment E494 === WARM RESTART ===
+comment E494 Disable interrupts, reload stack pointer
+comment E496 Disable IC19/IC20 CB2 interrupts
+comment E4A4 Setup IC20 direction registers
+comment E4A7 Initialize ACIA (no master reset)
+comment E4B3 Clear key state bits 6:5
+comment E4B9 Check GPIB link status
+comment E4C2 Jump to post_init_setup
+
+comment E4C5 === ACIA INIT (with master reset) ===
+comment E4C5 Write 0x13 to ACIA CSR (master reset)
+comment E4C9 Write 0x91: /16 clock, 8N2, RTS, RX interrupt enabled
+
+comment E4D1 === PIA DIRECTION REGISTER SETUP ===
+comment E4D1 IC18: PA3:PA0 outputs (DAC mux), PB inputs (ADC data)
+comment E4FA IC19: PA outputs (keyboard column drive), PB4:5 outputs
+comment E502 IC20: PA and PB all outputs (display/segment drive)
+comment E50A IC18 CA2 High (DAC latch strobe)
+comment E50E IC19 CA2 Low + CA1 IRQ enabled (keyboard interrupt)
+comment E516 IC18/IC19/IC20 CB2 Low (various control signals)
+
+*=============================================================================
+* Main Loop
+*=============================================================================
+comment E521 === POST-INIT SETUP ===
+comment E521 Init watchdog to 0xFF, prescaler to 4
+comment E529 Clear DAC output registers
+comment E532 Init DAC latch to 0x80 (midscale)
+comment E53E Init status to 0x44 (both channels idle)
+comment E544 Read SW3.1 to determine range mode
+comment E546 SW3.1: selects between 25V/2A (0x1130) and 50V/1A (0x0898)
+comment E552 Store range threshold in current limit registers
+comment E556 Set initial DAC update mask to 0x99
+comment E561 Enable interrupts, enter main loop
+
+comment E565 === IRQ DISPATCHER ===
+comment E565 Check IC19 CRA bit 7 (keyboard interrupt pending)
+comment E569 Branch if not keyboard: check ACIA
+comment E56B Keyboard IRQ: jump to keyboard handler
+comment E570 Check ACIA CSR bit 7 (ACIA interrupt pending)
+comment E574 ACIA IRQ: jump to ACIA handler
+comment E579 RTI (no interrupt source found)
+
+comment E57A === MAIN LOOP ===
+comment E57A Reset prescaler counter
+comment E57E Check reinit flag
+comment E583 Clear reinit flag, set link active, warm restart
+comment E58D Decrement status send delay if nonzero
+comment E594 Call: keyboard scan
+comment E597 Call: ADC read and process
+comment E59A Call: ADC acquisition
+comment E59D Call: DAC-from-ADC update
+comment E5A0 Call: process output and status
+comment E5A3 Decrement ACIA inhibit timer
+comment E5AF === STATUS SEND PHASE (alternating between two types) ===
+comment E5B0 Toggle status_toggle flag
+comment E5B3 If toggle=0: send device_state with 0x20 framing
+comment E5C4 If toggle=1: send frame_type with 0x30 framing
+comment E5CB Set status send delay to 0x0E
+comment E5CF Enable interrupts
+comment E5D0 Toggle IC18 CB2 (ADC clock/strobe cycle)
+comment E5DC Loop back to main_loop
+
+*=============================================================================
+* Display and LED Control
+*=============================================================================
+comment E7BA === PROCESS OUTPUT AND STATUS ===
+comment E7BA Calls control loop and display update functions
+
+comment E7C6 === UPDATE DISPLAY AND LEDS ===
+comment E7C6 Clear working registers
+comment E7CF Check frame_type: bit 7 = mode change pending
+comment E7D3 Mode change: update LED via channel 1
+comment E7DA Normal: check frame_type bit 0, update LED via channel 1
+comment E7E3 Check M0x52 bit 6: update LED via channel 2
+comment E7F0 Check frame_type bit 1: update LED via channel 2
+comment E7FB Check M0x52 bit 5: update LED via channel 8
+comment E808 Check device_state bit 7 (tracking): update LED via channel 8
+
+comment E811 === CHANNEL MODE LED INDICATORS ===
+comment E811 Check device_state bits for CV/CC/VL/IL mode combinations
+comment E811 Set/clear corresponding indicator LEDs via IC19 Port B
+comment E82B Both channels in same mode → specific LED pattern
+
+comment EA46 === SET LED BIT: OR into M005C ===
+comment EA4B === CLEAR LED BIT: OR into M005B ===
+comment EA50 === CHECK IF OUTPUT UPDATE NEEDED ===
+
+*=============================================================================
+* Keyboard Handler
+*=============================================================================
+comment EA60 === KEYBOARD IRQ HANDLER ===
+comment EA60 Read IC19 Port A (keyboard matrix)
+comment EA62 Update DAC outputs (refresh during IRQ)
+comment EA65 Advance DAC mux to next channel
+comment EA68 Write DAC output step
+comment EA6B Process IRQ tick timing
+comment EA6E Jump to output relay control
+
+comment EA74 === IRQ TICK HANDLER ===
+comment EA74 Decrement prescaler, reset to 4 when zero
+comment EA7D Increment tick counter
+comment EA80 Decrement debounce timer if nonzero
+comment EA88 Decrement watchdog, SWI if reaches zero
+comment EA91 Decrement key repeat timer if nonzero
+comment EA99 Decrement ACIA inhibit timer if nonzero
+
+*=============================================================================
+* Display Segment Driver
+*=============================================================================
+comment EAA2 === WRITE SEGMENT TO DISPLAY ===
+comment EAA2 Build display address from scan index
+comment EAAB Select output enable
+comment EACB Lookup segment pattern in SEGMENT_MAP_TABLE
+comment EAE9 Write segment data to IC20 Port B
+comment EAED Write address to IC20 Port A
+comment EAF5 Advance scan index (0-6, wrapping)
+
+lcomment EB21 7-segment lookup table: maps digit value to segment pattern
+
+*=============================================================================
+* Binary ↔ BCD Conversion
+*=============================================================================
+comment EB41 === BINARY TO BCD (16-bit to 5 decimal digits) ===
+comment EB41 Clear digit buffer (M0x1E-M0x22)
+comment EB4E Mask each digit to lower nibble (BCD)
+
+comment EB5E === MULTIPLY-ACCUMULATE (for BCD conversion) ===
+comment EB5E 16-bit multiply using shift-and-add
+
+comment EBA3 === DIVIDE BY POWERS OF TEN ===
+comment EBA3 Repeated subtraction of 10000, 1000, 100, 10
+comment EBA3 Results in individual BCD digits
+
+lcomment EBDA Powers of ten: $2710(10000) $03E8(1000) $0064(100) $000A(10)
+
+*=============================================================================
+* DAC Update System
+*=============================================================================
+comment EBE2 === DAC UPDATE ALL (process dac_update_mask) ===
+comment EBE2 Check each bit of M0x66 (dac_update_mask)
+comment EBE2 Bit 0: ChA voltage set → scale and output
+comment EBFB Bit 1: ChA current set
+comment EC0D Bit 2: ChA voltage limit
+comment EC1F Bit 3: ChA current limit
+comment EC31 Bit 4: ChB voltage set
+comment EC43 Bit 5: ChB current set
+comment EC55 Bit 6: ChB voltage limit
+comment EC67 Bit 7: ChB current limit
+comment EC79 Clear dac_update_mask after processing
+
+comment EC7D === STORE CHA VOLTAGE FEEDBACK ===
+comment EC7D Copy scaled values to DAC holding registers
+comment EC85 If tracking enabled (bit 7) and ChA active (bit 0):
+comment EC8F Copy ChA voltage to ChB voltage setpoint
+
+comment ECA3 === STORE CHB VOLTAGE FEEDBACK ===
+comment ECAB If tracking enabled and ChB active:
+comment ECB3 Copy ChB current to ChA current setpoint
+
+comment ECC9 === DAC SCALE FOR OUTPUT ===
+comment ECC9 Extract 14-bit value (clear dirty bit)
+comment ECD3 Select scale table (A or B based on channel)
+comment ECDC Apply 1.03125x correction (value + value/32)
+comment ECF6 Perform full-range DAC scaling computation
+comment ED09 Multi-step scaling with rounding
+
+lcomment EDF5 DAC scaling constants table A
+lcomment EDFE DAC scaling constants table B
+
+*=============================================================================
+* Keyboard Scanning
+*=============================================================================
+comment EE07 === KEYBOARD SCAN ENTRY ===
+comment EE07 Check debounce timer and key state flags
+comment EE12 If key state bit 6 set: update keycode from previous scan
+comment EE23 Clear scan state, init column counter
+comment EE2B === COLUMN SCAN LOOP ===
+comment EE2B Write inverted column mask to IC19 Port A
+comment EE31 Read row data from IC19 Port B (low nibble)
+comment EE36 Check if all rows high (no key pressed)
+comment EE46 Decode row: 0x07→keycode 0, 0x0B→keycode 8, etc.
+comment EE74 Combine column and row into final keycode
+comment EE7C Look up in key map table
+comment EE81 Advance to next column
+comment EE89 Check if any key was pressed during scan
+
+lcomment EEEC Key map table: maps raw scan code to function code
+
+*=============================================================================
+* ADC Reading
+*=============================================================================
+comment EF22 === ADC READ AND PROCESS ===
+comment EF22 Check frame_type and M0x44 flags
+comment EF30 Process valid ADC reading from ICL7135
+comment EF38 Disable interrupts during ADC processing
+comment EF39 Check frame_type for channel selection
+
+*=============================================================================
+* Range Limit Checking
+*=============================================================================
+comment F792 === CHECK DAC RANGE (25V mode) ===
+comment F792 Read SW3.2 from IC18 Port A bit 5
+comment F797 Select range from RANGE_LIMIT_TABLE
+comment F7AB Compare against limit, clamp if necessary
+
+comment F7DB === CHECK DAC RANGE (50V mode) ===
+comment F7DB Same structure as 25V check with different table offset
+
+lcomment F772 Range limit table: max DAC values for each mode
+lcomment F772 Format: 4 entries x 2 bytes (hi,lo) for 25V and 50V modes
+
+*=============================================================================
+* ADC Data Acquisition (ICL7135 interface)
+*=============================================================================
+comment F813 === ADC ACQUIRE READING ===
+comment F813 Check IC18 CRB bit 7 (CB1 interrupt = conversion complete)
+comment F820 Read IC18 Port B (clears interrupt flag)
+comment F826 Check DAC settle timer
+comment F845 === ADC COLUMN SCAN ===
+comment F845 Read IC18 Port B (4-bit ADC digit)
+comment F848 Wait for ADC busy signal via IC18 PA6
+comment F860 Decode column position from busy pattern
+comment F86D Store digit in readback buffer
+comment F878 Accumulate column scan results
+comment F880 Read sign bit from IC18 PA7 (polarity)
+
+*=============================================================================
+* ADC Channel Selection
+*=============================================================================
+comment F980 === SELECT ADC CHANNEL ===
+comment F980 Based on device_state and DAC settle timer
+comment F980 Selects which analog mux channel to read
+comment F996 If tracking or settling: follow channel select logic
+comment F9AC Return channel 0 (ChA voltage)
+comment F9AF Return channel 2 (ChA current)
+comment F9B3 Return channel 1 (ChB voltage)
+comment F9B7 Return channel 3 (ChB current)
+
+*=============================================================================
+* DAC-from-ADC Update
+*=============================================================================
+comment F9C2 === UPDATE DAC FROM ADC READINGS ===
+comment F9C2 Check DAC settle state
+comment F9CA Determine which DAC register to update based on M0x23
+comment F9E2 Compare against device_state mode bits
+comment FA06 Load current DAC value for comparison
+comment FA12 Calculate error and apply correction
+comment FA81 Clamp output within valid range
+
+*=============================================================================
+* DAC Mux Sequencing
+*=============================================================================
+comment FB21 === DAC MUX OUTPUT STEP ===
+comment FB21 Set IC18 PA upper bits for DAC strobe
+comment FB28 Decrement mux counter
+comment FB2E Load DAC value from holding register indexed by mux_ptr
+comment FB32 Write to AMUX_SELECT (IC29)
+comment FB37 Write to DAC_LATCH (IC27)
+comment FB3A XOR with mux select for strobe generation
+
+comment FB42 === DAC MUX ADVANCE ===
+comment FB42 Cycle through 4 mux positions (0→2→3→4→1→...)
+comment FB42 Each position selects: ChA_V, ChA_I, ChB_V, ChB_I
+
+*=============================================================================
+* Output Relay and Protection
+*=============================================================================
+comment FBF7 === OUTPUT RELAY CONTROL ===
+comment FBF7 Read device_state, check output enable (bit 6)
+comment FC03 Read IC19 Port B for overcurrent detection
+comment FC07 Compare against device_state mode bits
+comment FC13 Generate relay control signals
+comment FC21 Clear UART timeout on state change
+comment FC27 Store updated device_state
+comment FC29 === RELAY OVERCURRENT CHECK ===
+comment FC29 Read IC19 CRB for CB1 interrupt (overcurrent trip)
+comment FC33 If not output enabled: check for turn-on sequence
+comment FC35 Turn-on sequence: 4 cycles of mux output
+comment FC49 Deactivate IC19/IC20 interrupts during relay switch
+comment FC5F Relay settle delay (~1500 cycles)
+comment FC7B Clear device_state mode bits after relay off
+comment FC85 Jump to display update
+comment FC88 Turn-off sequence: reverse of turn-on
+
+*=============================================================================
+* Interrupt Vectors
+*=============================================================================
+comment E629 === NMI HANDLER ===
+comment E632 === SWI HANDLER (watchdog timeout) ===
+comment E466 === RESET HANDLER → cold_start_entry ===
+
+*=============================================================================
+* Miscellaneous
+*=============================================================================
+comment F3EA === RESET COMMAND STATE ===
+comment F3EA Set cmd_state_step=1 if channel_mode != 3, else 0
+comment F3F9 Clear cmd_flags, debounce, decimal_point, digit_count
+comment F404 Copy confirmed status to pending status
