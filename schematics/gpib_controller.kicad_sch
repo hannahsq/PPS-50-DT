@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20231120)
+	(version 20260306)
 	(generator "eeschema")
-	(generator_version "8.0")
+	(generator_version "10.0")
 	(uuid "29069901-1cca-41d4-a9f1-67b055f6ad0e")
 	(paper "A4")
 	(lib_symbols)
@@ -503,7 +503,6 @@
 	)
 	(label "CS0"
 		(at 180.34 63.5 0)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -514,7 +513,6 @@
 	)
 	(label "CS4"
 		(at 180.34 114.3 0)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -526,7 +524,6 @@
 	(hierarchical_label "~{RESET}"
 		(shape input)
 		(at 104.14 58.42 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -538,7 +535,6 @@
 	(hierarchical_label "VCC"
 		(shape input)
 		(at 104.14 40.64 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -550,7 +546,6 @@
 	(hierarchical_label "GND"
 		(shape passive)
 		(at 104.14 137.16 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -562,7 +557,6 @@
 	(hierarchical_label "GPIB_GND"
 		(shape passive)
 		(at 104.14 134.62 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -574,7 +568,6 @@
 	(hierarchical_label "~{TX}"
 		(shape output)
 		(at 210.82 119.38 0)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -586,7 +579,6 @@
 	(hierarchical_label "GPIB[0..16]"
 		(shape bidirectional)
 		(at 210.82 53.34 0)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -598,7 +590,6 @@
 	(hierarchical_label "~{NMI}"
 		(shape input)
 		(at 104.14 60.96 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -610,17 +601,23 @@
 	(sheet
 		(at 185.42 45.72)
 		(size 25.4 33.02)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
 		(stroke
 			(width 0.1524)
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "1456d356-938b-46d9-a90b-47c0b28a5f25")
 		(property "Sheetname" "GPIB Interface"
 			(at 185.42 45.0084 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -630,6 +627,8 @@
 		)
 		(property "Sheetfile" "gpib_interface.kicad_sch"
 			(at 185.42 79.3246 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -639,103 +638,103 @@
 		)
 		(pin "GPIB[0..16]" bidirectional
 			(at 210.82 53.34 0)
+			(uuid "35cb9e92-e465-4e26-829c-bfd7a1ca44ca")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "35cb9e92-e465-4e26-829c-bfd7a1ca44ca")
 		)
 		(pin "GND" passive
 			(at 185.42 76.2 180)
+			(uuid "2510974c-bbee-4d68-bc03-16fb1af20809")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "2510974c-bbee-4d68-bc03-16fb1af20809")
 		)
 		(pin "D[0..7]" bidirectional
 			(at 185.42 55.88 180)
+			(uuid "c6cda088-8c51-48b7-acf6-d86708876668")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "c6cda088-8c51-48b7-acf6-d86708876668")
 		)
 		(pin "VCC" input
 			(at 185.42 48.26 180)
+			(uuid "7c9674e8-59ed-400a-a50f-fdbda6801394")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "7c9674e8-59ed-400a-a50f-fdbda6801394")
 		)
 		(pin "GPIB_GND" passive
 			(at 185.42 73.66 180)
+			(uuid "6eef8757-6705-4a28-a166-d5023c165778")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "6eef8757-6705-4a28-a166-d5023c165778")
 		)
 		(pin "CS" input
 			(at 185.42 63.5 180)
+			(uuid "9732e422-4c2e-41e3-9e51-f8994bef9dfc")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "9732e422-4c2e-41e3-9e51-f8994bef9dfc")
 		)
 		(pin "A[0..15]" input
 			(at 185.42 53.34 180)
+			(uuid "40eaef94-eb48-4b3a-a2ec-27a224e1ca18")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "40eaef94-eb48-4b3a-a2ec-27a224e1ca18")
 		)
 		(pin "R{slash}~{W}" input
 			(at 185.42 66.04 180)
+			(uuid "988f579b-5315-4afc-b502-7048bdd7efa7")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "988f579b-5315-4afc-b502-7048bdd7efa7")
 		)
 		(pin "E" input
 			(at 185.42 68.58 180)
+			(uuid "463b735a-3161-4d22-8819-97358b7c8045")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "463b735a-3161-4d22-8819-97358b7c8045")
 		)
 		(pin "~{RESET}" input
 			(at 185.42 60.96 180)
+			(uuid "2115e5b7-f7d1-4042-89ed-3892f3d015d7")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "2115e5b7-f7d1-4042-89ed-3892f3d015d7")
 		)
 		(instances
 			(project "mainboard"
@@ -748,16 +747,22 @@
 	(sheet
 		(at 132.08 50.8)
 		(size 25.4 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(stroke
 			(width 0.1524)
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "ced93656-05ea-48a1-940a-4c64e51a0646")
 		(property "Sheetname" "Secondary Processor"
 			(at 132.08 50.0884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -767,6 +772,8 @@
 		)
 		(property "Sheetfile" "secondary_processor.kicad_sch"
 			(at 124.46 71.12 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -776,103 +783,103 @@
 		)
 		(pin "GND" input
 			(at 132.08 68.58 180)
+			(uuid "094e40ba-450b-4691-b351-8b9f55066871")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "094e40ba-450b-4691-b351-8b9f55066871")
 		)
 		(pin "E" output
 			(at 157.48 68.58 0)
+			(uuid "01eeb21b-3561-4e00-9544-56f505d45ddf")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "01eeb21b-3561-4e00-9544-56f505d45ddf")
 		)
 		(pin "A[0..15]" output
 			(at 157.48 53.34 0)
+			(uuid "086f91e5-3ebf-4988-bb25-8327f08d338d")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "086f91e5-3ebf-4988-bb25-8327f08d338d")
 		)
 		(pin "VMA" output
 			(at 157.48 63.5 0)
+			(uuid "a13086fa-37e5-416d-b803-aab04569b319")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "a13086fa-37e5-416d-b803-aab04569b319")
 		)
 		(pin "R{slash}~{W}" output
 			(at 157.48 66.04 0)
+			(uuid "281fd766-7715-4f4e-9197-b3dbacb92be5")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "281fd766-7715-4f4e-9197-b3dbacb92be5")
 		)
 		(pin "CS[0..7]" output
 			(at 157.48 58.42 0)
+			(uuid "144c20dd-5929-4d4d-a021-00fdbdbb6165")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "144c20dd-5929-4d4d-a021-00fdbdbb6165")
 		)
 		(pin "VCC" input
 			(at 132.08 53.34 180)
+			(uuid "ca589483-cd61-408d-ab73-ba505748719a")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "ca589483-cd61-408d-ab73-ba505748719a")
 		)
 		(pin "~{RESET}" input
 			(at 132.08 58.42 180)
+			(uuid "f9aedeeb-894e-4c56-8a54-9124749c192f")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "f9aedeeb-894e-4c56-8a54-9124749c192f")
 		)
 		(pin "~{NMI}" input
 			(at 132.08 60.96 180)
+			(uuid "a2f6d636-cf03-4e20-b5fc-98b73018fe6c")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "a2f6d636-cf03-4e20-b5fc-98b73018fe6c")
 		)
 		(pin "D[0..7]" bidirectional
 			(at 157.48 55.88 0)
+			(uuid "601f079b-6b82-40df-9de5-bbfd527d6f74")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "601f079b-6b82-40df-9de5-bbfd527d6f74")
 		)
 		(instances
 			(project "mainboard"
@@ -885,17 +892,23 @@
 	(sheet
 		(at 185.42 106.68)
 		(size 25.4 33.02)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
 		(stroke
 			(width 0.1524)
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "f33d80b0-a403-4edb-8efa-353a5a7e07f3")
 		(property "Sheetname" "GPIB Controller ACIA"
 			(at 185.42 105.9684 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -905,6 +918,8 @@
 		)
 		(property "Sheetfile" "gpib_ctrl_acia.kicad_sch"
 			(at 185.42 140.2846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -914,93 +929,93 @@
 		)
 		(pin "~{RX}" input
 			(at 185.42 132.08 180)
+			(uuid "0d87f100-eae9-4974-be84-6559a7932346")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "0d87f100-eae9-4974-be84-6559a7932346")
 		)
 		(pin "GND" passive
 			(at 185.42 137.16 180)
+			(uuid "38152be6-44d2-4da3-ac6a-4356fa606c3c")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "38152be6-44d2-4da3-ac6a-4356fa606c3c")
 		)
 		(pin "~{TX}" output
 			(at 210.82 119.38 0)
+			(uuid "41d046f1-390e-4f82-83e6-b10874614745")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
 			)
-			(uuid "41d046f1-390e-4f82-83e6-b10874614745")
 		)
 		(pin "CS" input
 			(at 185.42 114.3 180)
+			(uuid "782ae1fb-b2cf-42e2-a999-3c949c356e80")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "782ae1fb-b2cf-42e2-a999-3c949c356e80")
 		)
 		(pin "E" input
 			(at 185.42 116.84 180)
+			(uuid "f7c5b3de-d7e0-402c-af9f-9c4c75883256")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "f7c5b3de-d7e0-402c-af9f-9c4c75883256")
 		)
 		(pin "R{slash}~{W}" input
 			(at 185.42 119.38 180)
+			(uuid "d82d84af-f286-4fd7-bfd1-e370c0daeb5c")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "d82d84af-f286-4fd7-bfd1-e370c0daeb5c")
 		)
 		(pin "VCC" input
 			(at 185.42 109.22 180)
+			(uuid "e0caf1bd-d9bc-435b-9977-3ed6f3b96588")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "e0caf1bd-d9bc-435b-9977-3ed6f3b96588")
 		)
 		(pin "D[0..7]" bidirectional
 			(at 185.42 127 180)
+			(uuid "71d4b24a-877c-4abf-8da8-42f641d0743a")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "71d4b24a-877c-4abf-8da8-42f641d0743a")
 		)
 		(pin "A[0..15]" input
 			(at 185.42 124.46 180)
+			(uuid "ac830fce-4162-4187-9ac8-21b18b7e10b4")
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
 			)
-			(uuid "ac830fce-4162-4187-9ac8-21b18b7e10b4")
 		)
 		(instances
 			(project "mainboard"

@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20231120)
+	(version 20260306)
 	(generator "eeschema")
-	(generator_version "8.0")
+	(generator_version "10.0")
 	(uuid "c696762c-08b9-4a87-b3d0-3ff57eb86063")
 	(paper "A4")
 	(lib_symbols)
@@ -56,7 +56,6 @@
 	)
 	(label "SS3"
 		(at 129.54 104.14 0)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -68,7 +67,6 @@
 	(hierarchical_label "SS[1..10]"
 		(shape bidirectional)
 		(at 121.92 99.06 180)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
